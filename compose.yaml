@@ -1,0 +1,9 @@
+services:
+  postgres:
+    image: 'postgres:latest'
+    environment:
+      - 'POSTGRES_DB=jagrati_webapp'
+      - 'POSTGRES_PASSWORD=jagratisuperadmin'
+      - 'POSTGRES_USER=superadmin'
+    ports:
+      - '5433:5432'
