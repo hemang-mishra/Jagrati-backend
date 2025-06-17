@@ -1,5 +1,6 @@
 package org.jagrati.jagratibackend.entities
 
+import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.Table
@@ -11,11 +12,10 @@ import org.springframework.security.core.userdetails.UserDetails
 @Table(name = "users")
 data class User(
     @Id
+    @Column(name = "pid", length = 50)
     val pid: String,
-    val name: String,
     val email: String,
-    val hashedPassword: String,
-    val role: Role,
+    val hashedPassword: String
 ): UserDetails{
     override fun getAuthorities(): Collection<GrantedAuthority?>? {
         return listOf(SimpleGrantedAuthority(role.name))
