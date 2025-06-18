@@ -1,9 +1,12 @@
 package org.jagrati.jagratibackend.security
 
 import jakarta.transaction.Transactional
+import org.jagrati.jagratibackend.entities.EmailVerificationToken
 import org.jagrati.jagratibackend.entities.RefreshTokens
 import org.jagrati.jagratibackend.entities.User
+import org.jagrati.jagratibackend.repository.EmailVerificationTokenRepository
 import org.jagrati.jagratibackend.repository.RefreshTokenRepository
+import org.jagrati.jagratibackend.services.EmailService
 import org.jagrati.jagratibackend.services.UserService
 import org.jagrati.jagratibackend.util.PidGenerator.generatePid
 import org.springframework.security.authentication.BadCredentialsException
@@ -12,13 +15,17 @@ import java.lang.IllegalArgumentException
 import java.security.MessageDigest
 import java.time.Instant
 import java.util.Base64
+import java.util.UUID
+import kotlin.toString
 
 @Service
 class AuthService(
     private val jwtService: JWTService,
     private val userService: UserService,
     private val hashEncoder: HashEncoder,
-    private val refreshTokenRepository: RefreshTokenRepository
+    private val refreshTokenRepository: RefreshTokenRepository,
+    private val emailVerificationTokenRepository: EmailVerificationTokenRepository,
+    private val emailService: EmailService
 ) {
 
     data class TokenPair(
@@ -51,8 +58,16 @@ class AuthService(
             email = email,
             passwordHash = hashedPassword
         )
-        //TODO: Add email verification logic
-        // Save to database
+
+        val token = UUID.randomUUID().toString()
+        val verificationToken = EmailVerificationToken(
+            token = token,
+            email = email
+        )
+        emailVerificationTokenRepository.save(verificationToken)
+
+        // Send verification email
+        emailService.sendVerificationEmail(email, token, firstName)
         return userService.saveUser(newUser)
     }
 
@@ -68,8 +83,10 @@ class AuthService(
     }
 
     @Transactional
-    fun refresh(refreshToken: String): TokenPair{
-        if(!jwtService.validateRefreshToken(refreshToken)){ throw IllegalStateException("Invalid refresh token format.") }
+    fun refresh(refreshToken: String): TokenPair {
+        if (!jwtService.validateRefreshToken(refreshToken)) {
+            throw IllegalStateException("Invalid refresh token format.")
+        }
         val userId = jwtService.getUserIdFromToken(refreshToken)
         val user = userService.getUserById(userId) ?: throw BadCredentialsException("Invalid refresh token.")
         val hashedRefreshToken = hashToken(refreshToken)
@@ -80,6 +97,49 @@ class AuthService(
         val accessToken = jwtService.generateAccessToken(user)
         storeRefreshToken(user.email, newRefreshToken)
         return TokenPair(accessToken, newRefreshToken)
+    }
+
+    @Transactional
+    fun verifyEmail(token: String): Boolean {
+        val verificationToken = emailVerificationTokenRepository.findByToken(token)
+            ?: throw IllegalArgumentException("Invalid verification token.")
+        if (verificationToken.expiresAt.isBefore(Instant.now())) {
+            emailVerificationTokenRepository.delete(verificationToken)
+            throw IllegalArgumentException("Verification token expired.")
+        }
+        val user = userService.getUserByEmail(verificationToken.email) ?: throw IllegalArgumentException("User not found.")
+        user.isEmailVerified = true
+        userService.saveUser(user)
+
+        //Cleanup used token
+        emailVerificationTokenRepository.delete(verificationToken)
+        return true
+    }
+
+    @Transactional
+    fun resendVerificationEmail(email: String): Boolean {
+        val user = userService.getUserByEmail(email)
+            ?: throw IllegalArgumentException("User not found")
+
+        if (user.isEmailVerified) {
+            throw IllegalStateException("Email already verified")
+        }
+
+        // Clean up existing tokens
+        emailVerificationTokenRepository.deleteByEmail(email)
+
+        // Generate new token
+        val token = UUID.randomUUID().toString()
+        val verificationToken = EmailVerificationToken(
+            token = token,
+            email = email
+        )
+        emailVerificationTokenRepository.save(verificationToken)
+
+        // Send verification email
+        emailService.sendVerificationEmail(email, token)
+
+        return true
     }
 
     private fun storeRefreshToken(email: String, rawRefreshToken: String) {
@@ -93,7 +153,7 @@ class AuthService(
         )
     }
 
-    private fun hashToken(token: String): String{
+    private fun hashToken(token: String): String {
         val digest = MessageDigest.getInstance("SHA-256")
         val hashBytes = digest.digest(token.encodeToByteArray())
         return Base64.getEncoder().encodeToString(hashBytes)

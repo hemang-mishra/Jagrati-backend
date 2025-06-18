@@ -22,6 +22,7 @@ class SecurityConfiguration(
             .authorizeHttpRequests { auth ->
                 auth
                     .requestMatchers("/api/auth/**").permitAll()
+                    .requestMatchers("/auth/verify-email").permitAll()
                     .anyRequest().authenticated()
             }
             .addFilterBefore(

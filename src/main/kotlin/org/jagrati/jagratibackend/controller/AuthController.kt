@@ -4,9 +4,11 @@ import org.jagrati.jagratibackend.entities.User
 import org.jagrati.jagratibackend.security.AuthService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseBody
 import org.springframework.web.bind.annotation.RestController
 
@@ -19,6 +21,7 @@ class AuthController(
     data class RefreshRequest(val refreshToken: String)
     data class RegisterRequest(val email: String, val password: String, val firstName: String, val lastName: String)
     data class RegisterResponse(val pid: String, val firstName: String, val lastName: String, val email: String)
+    data class ResendVerificationRequest(val email: String)
 
     @PostMapping("/register")
     fun register(
@@ -55,5 +58,12 @@ class AuthController(
     ): ResponseEntity<AuthService.TokenPair> {
         val tokenPair = authService.refresh(body.refreshToken)
         return ResponseEntity(tokenPair, HttpStatus.OK)
+    }
+
+
+    @PostMapping("/resend-verification")
+    fun resendVerification(@RequestBody request: ResendVerificationRequest): ResponseEntity<Map<String, String>> {
+        authService.resendVerificationEmail(request.email)
+        return ResponseEntity.ok(mapOf("message" to "Verification email sent"))
     }
 }

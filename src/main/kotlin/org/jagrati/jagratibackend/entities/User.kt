@@ -31,10 +31,13 @@ data class User(
     val email: String,
 
     @Column(name = "password_hash", nullable = false, length = 255)
-    val passwordHash: String,
+    var passwordHash: String,
 
     @Column(name = "is_active", nullable = false)
     var isActive: Boolean = true,
+
+    @Column(name = "is_email_verified", nullable = false)
+    var isEmailVerified: Boolean = false,
 
     @OneToMany(mappedBy = "user", fetch = FetchType.EAGER)
     val userRoles: Set<UserRole> = emptySet()
