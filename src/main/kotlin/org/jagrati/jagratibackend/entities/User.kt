@@ -4,6 +4,7 @@ import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
 import jakarta.persistence.Id
+import jakarta.persistence.Index
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import org.springframework.security.core.GrantedAuthority
@@ -11,7 +12,10 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
 
 @Entity
-@Table(name = "users")
+@Table(name = "users",
+    indexes = [
+        Index(columnList = "email", name = "idx_user_email"),
+    ])
 data class User(
     @Id
     @Column(name = "pid", length = 50)
@@ -44,6 +48,6 @@ data class User(
     }
 
     override fun getUsername(): String? {
-        return email
+        return pid
     }
 }
