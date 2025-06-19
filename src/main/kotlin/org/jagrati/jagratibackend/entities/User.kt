@@ -39,6 +39,9 @@ data class User(
     @Column(name = "is_email_verified", nullable = false)
     var isEmailVerified: Boolean = false,
 
+    @Column(name = "profile_picture_url", nullable = true, length = 512)
+    var profilePictureUrl: String? = null,
+
     @OneToMany(mappedBy = "user", fetch = FetchType.EAGER)
     val userRoles: Set<UserRole> = emptySet()
 ) : BaseEntity(),UserDetails{

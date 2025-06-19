@@ -2,6 +2,7 @@ package org.jagrati.jagratibackend.controller
 
 import org.jagrati.jagratibackend.entities.User
 import org.jagrati.jagratibackend.security.AuthService
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/auth")
 class AuthController(
     private val authService: AuthService,
+    @Value("\${app.base-url}") private val baseUrl: String
 ) {
     data class LoginRequest(val email: String, val password: String)
     data class RefreshRequest(val refreshToken: String)
@@ -23,7 +25,7 @@ class AuthController(
     data class RegisterResponse(val pid: String, val firstName: String, val lastName: String, val email: String)
     data class ResendVerificationRequest(val email: String)
     data class ForgotPasswordRequest(val email: String)
-    data class ResetPasswordRequest(val token: String, val password: String)
+    data class GoogleLoginRequest(val idToken: String)
 
     @PostMapping("/register")
     fun register(
@@ -83,4 +85,17 @@ class AuthController(
         }
     }
 
+    //For Web clients
+    @GetMapping("/google-login-url")
+    fun googleLoginUrl(): ResponseEntity<Map<String, String>> {
+        val baseUrl = "$baseUrl/oauth2/authorize/google"
+        return ResponseEntity.ok(mapOf("url" to baseUrl))
+    }
+
+    //For android
+    @PostMapping("/google")
+    fun googleLogin(@RequestBody request: GoogleLoginRequest): ResponseEntity<AuthService.TokenPair>{
+        val tokenPair = authService.loginWithGoogle(request.idToken)
+        return ResponseEntity(tokenPair, HttpStatus.OK)
+    }
 }

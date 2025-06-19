@@ -48,6 +48,11 @@ dependencies {
 
     //Templates
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
+
+    //OAuth2
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
+    implementation("org.springframework.security:spring-security-oauth2-jose")
+    implementation("com.google.api-client:google-api-client:2.8.0")
 }
 
 kotlin {

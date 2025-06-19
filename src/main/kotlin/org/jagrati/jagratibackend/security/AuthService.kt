@@ -1,5 +1,9 @@
 package org.jagrati.jagratibackend.security
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier
+import com.google.api.client.http.javanet.NetHttpTransport
+import com.google.api.client.json.gson.GsonFactory
 import jakarta.transaction.Transactional
 import org.jagrati.jagratibackend.entities.EmailVerificationToken
 import org.jagrati.jagratibackend.entities.PasswordResetToken
@@ -10,14 +14,18 @@ import org.jagrati.jagratibackend.repository.PasswordResetTokenRepository
 import org.jagrati.jagratibackend.repository.RefreshTokenRepository
 import org.jagrati.jagratibackend.services.EmailService
 import org.jagrati.jagratibackend.services.UserService
+import org.jagrati.jagratibackend.util.PidGenerator
 import org.jagrati.jagratibackend.util.PidGenerator.generatePid
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.authentication.BadCredentialsException
+import org.springframework.security.oauth2.core.user.OAuth2User
 import org.springframework.stereotype.Service
 import java.lang.IllegalArgumentException
 import java.security.MessageDigest
 import java.time.Instant
 import java.util.Base64
+import java.util.Collections
 import java.util.UUID
 import kotlin.toString
 
@@ -29,7 +37,9 @@ class AuthService(
     private val refreshTokenRepository: RefreshTokenRepository,
     private val emailVerificationTokenRepository: EmailVerificationTokenRepository,
     private val emailService: EmailService,
-    private val passwordResetTokenRepository: PasswordResetTokenRepository
+    private val passwordResetTokenRepository: PasswordResetTokenRepository,
+    @Value("\${spring.security.oauth2.client.registration.google.client-id}")
+    private val googleClientId: String
 ) {
     private val logger = LoggerFactory.getLogger(AuthService::class.java)
     data class TokenPair(
@@ -129,8 +139,15 @@ class AuthService(
             throw IllegalStateException("Email already verified")
         }
 
-        // Clean up existing tokens
-        emailVerificationTokenRepository.deleteByEmail(email)
+        // Check if a token already exists
+        val existingToken = emailVerificationTokenRepository.findByEmail(email)
+
+        // If token exists, delete it first
+        if (existingToken != null) {
+            emailVerificationTokenRepository.delete(existingToken)
+            // Force flush to ensure the delete is committed before creating a new token
+            emailVerificationTokenRepository.flush()
+        }
 
         // Generate new token
         val token = UUID.randomUUID().toString()
@@ -141,7 +158,7 @@ class AuthService(
         emailVerificationTokenRepository.save(verificationToken)
 
         // Send verification email
-        emailService.sendVerificationEmail(email, token)
+        emailService.sendVerificationEmail(email, token, user.firstName)
 
         return true
     }
@@ -209,6 +226,57 @@ class AuthService(
         }
 
         return true
+    }
+
+    fun loginWithGoogle(idTokenString: String): TokenPair{
+        val verifier = GoogleIdTokenVerifier.Builder(NetHttpTransport(), GsonFactory.getDefaultInstance())
+            .setAudience(Collections.singleton(googleClientId))
+            .build()
+
+        val idToken = verifier.verify(idTokenString) ?: throw BadCredentialsException("Google idToken not found.")
+
+        val payload: GoogleIdToken.Payload = idToken.payload
+        val user = processOAuth2User(
+            email = payload.email,
+            firstName = payload["given_name"] as String,
+            lastName = payload["family_name"] as String? ?: "",
+            pictureUrl = payload["picture"] as String?,
+        )
+
+        val accessToken = jwtService.generateAccessToken(user)
+        val refreshToken = jwtService.generateRefreshToken(user)
+        storeRefreshToken(user.email, accessToken)
+        return TokenPair(accessToken, refreshToken)
+    }
+
+    fun processOAuth2User(email: String, firstName: String, lastName: String, pictureUrl: String? = null): User {
+        // Check if user exists
+        var user = userService.getUserByEmail(email)
+
+        if (user == null) {
+            // Create new user if not exists
+            val pid = PidGenerator.generatePid(name = firstName)
+            val password = UUID.randomUUID().toString()
+            user = User(
+                pid = pid,
+                firstName = firstName,
+                lastName = lastName,
+                email = email,
+                passwordHash = hashEncoder.encode(password),
+                profilePictureUrl = pictureUrl,
+                isEmailVerified = true // Google already verified the email
+            )
+            userService.saveUser(user)
+        }else{
+            //Check if profile pic is added, if not, add it
+            if(pictureUrl != null){
+                user = user.copy(profilePictureUrl = pictureUrl)
+                userService.saveUser(user)
+            }
+        }
+
+
+        return user
     }
 
     private fun storeRefreshToken(email: String, rawRefreshToken: String) {
