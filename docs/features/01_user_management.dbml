@@ -1,0 +1,105 @@
+// =============================================
+// Feature 1: User Management & Role System
+// =============================================
+
+Table users {
+  pid varchar(50) [primary key]
+  first_name varchar(50) [not null]
+  last_name varchar(50) [not null]
+  email varchar(255) [not null, unique]
+  password_hash varchar(255) [not null]
+  is_active boolean [default: true]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+Table roles {
+  id bigint [primary key]
+  name varchar(50) [not null, unique]
+  description text
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+Table permissions {
+  id bigint [primary key]
+  name varchar(50) [not null, unique]
+  description text
+  module varchar(50) [not null, note: 'STUDENT, VOLUNTEER, ATTENDANCE, CLASSWORK, HOMEWORK, SCHEDULE, POST, RANKING']
+  action varchar(50) [not null, note: 'CREATE, READ, UPDATE, DELETE, APPROVE, REJECT']
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+Table role_permissions {
+  id bigint [primary key]
+  role_id bigint [not null]
+  permission_id bigint [not null]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+Table user_roles {
+  id bigint [primary key]
+  user_pid varchar(50) [not null]
+  role_id bigint [not null]
+  assigned_by_pid varchar(50) [not null]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+Table volunteer_requests {
+  id bigint [primary key]
+  roll_number varchar(20) [unique]
+  first_name varchar(50) [not null]
+  last_name varchar(50) [not null]
+  gender varchar(10) [not null, note: 'MALE, FEMALE, OTHER']
+  alternate_email varchar(255)
+  batch varchar(20)
+  programme varchar(100)
+  street_address_1 text
+  street_address_2 text
+  pincode varchar(10)
+  city varchar(100)
+  state varchar(100)
+  date_of_birth date [not null]
+  contact_number varchar(20)
+  profile_image_url varchar(255)
+  college varchar(100)
+  branch varchar(100)
+  year_of_study int
+  status varchar(20) [not null, note: 'PENDING, APPROVED, REJECTED']
+  requested_by_pid varchar(50) [not null, note: 'User who created the request']
+  reviewed_by_pid varchar(50) [note: 'Admin who reviewed the request']
+  reviewed_at timestamp
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+Table role_transitions {
+  id bigint [primary key]
+  user_pid varchar(50) [not null]
+  from_role_id bigint [not null]
+  to_role_id bigint [not null]
+  transition_type varchar(20) [not null, note: 'UPGRADE, DOWNGRADE']
+  status varchar(20) [not null, note: 'PENDING, APPROVED, REJECTED']
+  requested_by_pid varchar(50) [not null]
+  approved_by_pid varchar(50) [note: 'Admin who approved/rejected the request']
+  approved_at timestamp
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+// References
+Ref: roles.id < user_roles.role_id
+Ref: users.pid < user_roles.user_pid
+Ref: users.pid < user_roles.assigned_by_pid
+Ref: roles.id < role_permissions.role_id
+Ref: permissions.id < role_permissions.permission_id
+Ref: role_transitions.user_pid > users.pid
+Ref: role_transitions.from_role_id > roles.id
+Ref: role_transitions.to_role_id > roles.id
+Ref: role_transitions.requested_by_pid > users.pid
+Ref: role_transitions.approved_by_pid > users.pid
+Ref: volunteer_requests.reviewed_by_pid > users.pid
+Ref: volunteer_requests.requested_by_pid > users.pid
