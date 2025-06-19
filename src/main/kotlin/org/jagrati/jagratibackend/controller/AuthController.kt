@@ -22,6 +22,8 @@ class AuthController(
     data class RegisterRequest(val email: String, val password: String, val firstName: String, val lastName: String)
     data class RegisterResponse(val pid: String, val firstName: String, val lastName: String, val email: String)
     data class ResendVerificationRequest(val email: String)
+    data class ForgotPasswordRequest(val email: String)
+    data class ResetPasswordRequest(val token: String, val password: String)
 
     @PostMapping("/register")
     fun register(
@@ -63,7 +65,22 @@ class AuthController(
 
     @PostMapping("/resend-verification")
     fun resendVerification(@RequestBody request: ResendVerificationRequest): ResponseEntity<Map<String, String>> {
-        authService.resendVerificationEmail(request.email)
-        return ResponseEntity.ok(mapOf("message" to "Verification email sent"))
+        val emailSent = authService.resendVerificationEmail(request.email)
+        return if (emailSent) {
+            ResponseEntity.ok(mapOf("message" to "Verification email sent"))
+        } else {
+            ResponseEntity.badRequest().body(mapOf("message" to "Failed to send verification email"))
+        }
     }
+
+    @PostMapping("/forgot-password")
+    fun forgotPassword(@RequestBody request: ForgotPasswordRequest): ResponseEntity<Map<String, String>> {
+        val emailSent = authService.initiatePasswordReset(request.email)
+        return if (emailSent) {
+            ResponseEntity.ok(mapOf("message" to "Password reset email has been sent"))
+        } else {
+            ResponseEntity.badRequest().body(mapOf("message" to "Failed to send password reset email"))
+        }
+    }
+
 }

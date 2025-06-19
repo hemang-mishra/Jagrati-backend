@@ -532,11 +532,11 @@ class EmailService(
 
     // Additional method for password reset emails
     fun sendPasswordResetEmail(email: String, token: String, userName: String? = null) {
-        val subject = "$appName: Secure Your Account - Continue Supporting Children's Education"
-        val resetUrl = "$baseUrl/reset-password?token=$token"
+        val subject = "$appName: Password Reset Request"
+        val resetUrl = "$baseUrl/auth/reset-password?token=$token"
 
         val content = buildPasswordResetEmailContent(
-            userName = userName ?: "Educator",
+            userName = userName ?: "User",
             resetUrl = resetUrl,
             appName = appName
         )
@@ -547,7 +547,7 @@ class EmailService(
             helper.setTo(email)
             helper.setFrom(fromEmail, appName)
             helper.setSubject(subject)
-            helper.setText(content, true)
+            helper.setText(content, true) // true for HTML content
             mailSender.send(message)
             logger.info("Password reset email sent to $email")
         } catch (e: Exception) {
@@ -570,34 +570,34 @@ class EmailService(
                 <title>Password Reset - $appName</title>
                 <style>
                     * { margin: 0; padding: 0; box-sizing: border-box; }
-                    body { 
-                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; 
-                        line-height: 1.6; 
-                        color: #1a1a1a; 
+                    body {
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+                        line-height: 1.6;
+                        color: #1a1a1a;
                         background: linear-gradient(135deg, #fff5f5 0%, #fed7cc 25%, #fb923c 50%, #ea580c 75%, #c2410c 100%);
                         min-height: 100vh;
                         padding: 20px 0;
                     }
-                    .email-container { 
-                        max-width: 650px; 
-                        margin: 0 auto; 
+                    .email-container {
+                        max-width: 650px;
+                        margin: 0 auto;
                         background: rgba(255, 255, 255, 0.95);
                         backdrop-filter: blur(10px);
-                        border-radius: 24px; 
-                        overflow: hidden; 
-                        box-shadow: 
+                        border-radius: 24px;
+                        overflow: hidden;
+                        box-shadow:
                             0 25px 50px rgba(234, 88, 12, 0.15),
                             0 0 0 1px rgba(255, 255, 255, 0.1),
                             inset 0 1px 0 rgba(255, 255, 255, 0.6);
                         border: 1px solid rgba(251, 146, 60, 0.2);
                     }
-                    .header { 
-                        background: linear-gradient(135deg, #ea580c 0%, #dc2626 20%, #b91c1c 40%, #991b1b 60%, #7f1d1d 80%, #450a0a 100%); 
-                        padding: 60px 40px; 
-                        text-align: center; 
-                        color: white; 
-                        position: relative; 
-                        overflow: hidden; 
+                    .header {
+                        background: linear-gradient(135deg, #ea580c 0%, #dc2626 20%, #b91c1c 40%, #991b1b 60%, #7f1d1d 80%, #450a0a 100%);
+                        padding: 60px 40px;
+                        text-align: center;
+                        color: white;
+                        position: relative;
+                        overflow: hidden;
                     }
                     .header-ornament {
                         font-size: 4rem;
@@ -605,21 +605,21 @@ class EmailService(
                         text-shadow: 0 4px 8px rgba(0,0,0,0.3);
                         filter: drop-shadow(0 0 20px rgba(255,255,255,0.4));
                     }
-                    .header h1 { 
-                        font-size: 36px; 
-                        font-weight: 800; 
-                        margin-bottom: 12px; 
+                    .header h1 {
+                        font-size: 36px;
+                        font-weight: 800;
+                        margin-bottom: 12px;
                         letter-spacing: -1px;
                         text-shadow: 0 2px 4px rgba(0,0,0,0.2);
                     }
-                    .header p { 
-                        font-size: 18px; 
-                        opacity: 0.95; 
+                    .header p {
+                        font-size: 18px;
+                        opacity: 0.95;
                         font-weight: 300;
                         letter-spacing: 0.5px;
                     }
-                    .content { 
-                        padding: 60px 50px; 
+                    .content {
+                        padding: 60px 50px;
                         background: linear-gradient(180deg, #ffffff 0%, #fff7ed 30%, #ffedd5 70%, #fed7cc 100%);
                         position: relative;
                     }
@@ -632,10 +632,10 @@ class EmailService(
                         height: 3px;
                         background: linear-gradient(90deg, #ea580c 0%, #dc2626 25%, #b91c1c 50%, #991b1b 75%, #ea580c 100%);
                     }
-                    .greeting { 
-                        font-size: 28px; 
-                        font-weight: 700; 
-                        margin-bottom: 30px; 
+                    .greeting {
+                        font-size: 28px;
+                        font-weight: 700;
+                        margin-bottom: 30px;
                         background: linear-gradient(135deg, #ea580c 0%, #dc2626 30%, #b91c1c 70%, #991b1b 100%);
                         -webkit-background-clip: text;
                         -webkit-text-fill-color: transparent;
@@ -643,11 +643,11 @@ class EmailService(
                         text-align: center;
                         letter-spacing: -0.5px;
                     }
-                    .message { 
-                        font-size: 17px; 
-                        line-height: 1.8; 
-                        margin-bottom: 40px; 
-                        color: #374151; 
+                    .message {
+                        font-size: 17px;
+                        line-height: 1.8;
+                        margin-bottom: 40px;
+                        color: #374151;
                     }
                     .message strong {
                         color: #dc2626;
@@ -658,31 +658,31 @@ class EmailService(
                         margin: 40px 0;
                         perspective: 1000px;
                     }
-                    .verify-button { 
-                        display: inline-block; 
-                        background: linear-gradient(135deg, #ea580c 0%, #dc2626 25%, #b91c1c 50%, #991b1b 75%, #7f1d1d 100%); 
-                        color: white; 
-                        padding: 20px 48px; 
-                        text-decoration: none; 
-                        border-radius: 16px; 
-                        font-weight: 700; 
-                        font-size: 18px; 
-                        text-align: center; 
-                        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-                        box-shadow: 
+                    .verify-button {
+                        display: inline-block;
+                        background: linear-gradient(135deg, #ea580c 0%, #dc2626 25%, #b91c1c 50%, #991b1b 75%, #7f1d1d 100%);
+                        color: white;
+                        padding: 20px 48px;
+                        text-decoration: none;
+                        border-radius: 16px;
+                        font-weight: 700;
+                        font-size: 18px;
+                        text-align: center;
+                        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                        box-shadow:
                             0 12px 28px rgba(234, 88, 12, 0.4),
                             0 4px 8px rgba(220, 38, 38, 0.3),
-                            inset 0 1px 0 rgba(255, 255, 255, 0.2); 
-                        text-transform: none; 
-                        letter-spacing: 0.5px; 
-                        position: relative; 
+                            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+                        text-transform: none;
+                        letter-spacing: 0.5px;
+                        position: relative;
                         overflow: hidden;
                         border: 2px solid rgba(255, 255, 255, 0.1);
                         transform-style: preserve-3d;
                     }
                     .verify-button:hover {
                         transform: translateY(-6px) rotateX(5deg);
-                        box-shadow: 
+                        box-shadow:
                             0 20px 40px rgba(234, 88, 12, 0.5),
                             0 8px 16px rgba(220, 38, 38, 0.4),
                             inset 0 1px 0 rgba(255, 255, 255, 0.3);
@@ -696,13 +696,13 @@ class EmailService(
                         justify-content: center;
                         gap: 8px;
                     }
-                    .alternative-text { 
-                        font-size: 15px; 
-                        color: #6b7280; 
-                        margin-top: 35px; 
-                        padding: 25px; 
-                        background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); 
-                        border-radius: 12px; 
+                    .alternative-text {
+                        font-size: 15px;
+                        color: #6b7280;
+                        margin-top: 35px;
+                        padding: 25px;
+                        background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+                        border-radius: 12px;
                         border-left: 4px solid #ea580c;
                         box-shadow: 0 2px 8px rgba(234, 88, 12, 0.1);
                     }
@@ -710,8 +710,8 @@ class EmailService(
                         color: #374151;
                         font-weight: 600;
                     }
-                    .url-text { 
-                        word-break: break-all; 
+                    .url-text {
+                        word-break: break-all;
                         background: linear-gradient(135deg, #ea580c 0%, #dc2626 50%, #b91c1c 100%);
                         -webkit-background-clip: text;
                         -webkit-text-fill-color: transparent;
@@ -726,24 +726,24 @@ class EmailService(
                         font-size: 14px;
                         box-shadow: inset 0 2px 4px rgba(234, 88, 12, 0.1);
                     }
-                    .footer { 
-                        background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); 
-                        padding: 35px 50px; 
-                        text-align: center; 
-                        border-top: 1px solid #e5e7eb; 
+                    .footer {
+                        background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+                        padding: 35px 50px;
+                        text-align: center;
+                        border-top: 1px solid #e5e7eb;
                     }
-                    .footer p { 
-                        font-size: 14px; 
-                        color: #6b7280; 
+                    .footer p {
+                        font-size: 14px;
+                        color: #6b7280;
                         margin-bottom: 10px;
                         line-height: 1.5;
                     }
-                    .security-note { 
-                        background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); 
-                        border: 2px solid #fed7cc; 
-                        border-radius: 16px; 
-                        padding: 30px; 
-                        margin: 35px 0; 
+                    .security-note {
+                        background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+                        border: 2px solid #fed7cc;
+                        border-radius: 16px;
+                        padding: 30px;
+                        margin: 35px 0;
                         box-shadow: 0 8px 20px rgba(234, 88, 12, 0.1);
                         position: relative;
                         overflow: hidden;
@@ -757,46 +757,46 @@ class EmailService(
                         height: 3px;
                         background: linear-gradient(90deg, #ea580c 0%, #dc2626 50%, #b91c1c 100%);
                     }
-                    .security-note h3 { 
+                    .security-note h3 {
                         background: linear-gradient(135deg, #ea580c 0%, #dc2626 50%, #b91c1c 100%);
                         -webkit-background-clip: text;
                         -webkit-text-fill-color: transparent;
                         background-clip: text;
-                        font-size: 20px; 
+                        font-size: 20px;
                         font-weight: 700;
-                        margin-bottom: 15px; 
-                        display: flex; 
-                        align-items: center; 
+                        margin-bottom: 15px;
+                        display: flex;
+                        align-items: center;
                     }
-                    .security-note p { 
-                        color: #ea580c; 
-                        font-size: 16px; 
-                        line-height: 1.7; 
-                        font-weight: 500; 
+                    .security-note p {
+                        color: #ea580c;
+                        font-size: 16px;
+                        line-height: 1.7;
+                        font-weight: 500;
                     }
-                    .icon { 
+                    .icon {
                         margin-right: 10px;
                         font-size: 1.2em;
                     }
-                    @media (max-width: 650px) { 
+                    @media (max-width: 650px) {
                         body {
                             padding: 10px 0;
                         }
-                        .email-container { 
-                            margin: 0 10px; 
-                            border-radius: 16px; 
+                        .email-container {
+                            margin: 0 10px;
+                            border-radius: 16px;
                         }
-                        .header { 
-                            padding: 40px 25px; 
+                        .header {
+                            padding: 40px 25px;
                         }
-                        .header h1 { 
-                            font-size: 28px; 
+                        .header h1 {
+                            font-size: 28px;
                         }
                         .header-ornament {
                             font-size: 3rem;
                         }
-                        .content { 
-                            padding: 40px 25px; 
+                        .content {
+                            padding: 40px 25px;
                         }
                         .greeting {
                             font-size: 24px;
@@ -804,12 +804,12 @@ class EmailService(
                         .message {
                             font-size: 16px;
                         }
-                        .footer { 
-                            padding: 25px; 
+                        .footer {
+                            padding: 25px;
                         }
-                        .verify-button { 
-                            display: block; 
-                            width: 100%; 
+                        .verify-button {
+                            display: block;
+                            width: 100%;
                             padding: 20px;
                             font-size: 16px;
                         }
@@ -829,16 +829,16 @@ class EmailService(
                             <p>Secure Your Account</p>
                         </div>
                     </div>
-                    
+
                     <div class="content">
                         <div class="greeting">Hello $userName! 🔐</div>
-                        
+
                         <div class="message">
                             We received a request to reset your password for your <strong>$appName</strong> account - your gateway to supporting children's education.
                             <br><br>
                             To continue your valuable contribution to our educational mission, please click below to create a new secure password:
                         </div>
-                        
+
                         <div class="button-container">
                             <a href="$resetUrl" class="verify-button">
                                 <span class="button-text">
@@ -848,22 +848,22 @@ class EmailService(
                                 </span>
                             </a>
                         </div>
-                        
+
                         <div class="security-note">
                             <h3><span class="icon">⚠️</span>Account Security Notice</h3>
                             <p>
-                                This password reset link will expire in 1 hour for your security. 
+                                This password reset link will expire in 1 hour for your security.
                                 If you didn't request this reset, please ignore this email - your account remains secure and your support for children's education continues uninterrupted.
                             </p>
                         </div>
-                        
+
                         <div class="alternative-text">
                             <strong>Having trouble with the button?</strong><br>
                             Copy and paste this link into your browser:
                             <div class="url-text">$resetUrl</div>
                         </div>
                     </div>
-                    
+
                     <div class="footer">
                         <p>© ${java.time.Year.now().value} $appName - A Social Initiative for Children's Education. All rights reserved.</p>
                         <p>This email was sent to help secure your account and ensure continued access to our platform.</p>

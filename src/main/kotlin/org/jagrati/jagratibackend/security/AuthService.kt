@@ -2,13 +2,16 @@ package org.jagrati.jagratibackend.security
 
 import jakarta.transaction.Transactional
 import org.jagrati.jagratibackend.entities.EmailVerificationToken
+import org.jagrati.jagratibackend.entities.PasswordResetToken
 import org.jagrati.jagratibackend.entities.RefreshTokens
 import org.jagrati.jagratibackend.entities.User
 import org.jagrati.jagratibackend.repository.EmailVerificationTokenRepository
+import org.jagrati.jagratibackend.repository.PasswordResetTokenRepository
 import org.jagrati.jagratibackend.repository.RefreshTokenRepository
 import org.jagrati.jagratibackend.services.EmailService
 import org.jagrati.jagratibackend.services.UserService
 import org.jagrati.jagratibackend.util.PidGenerator.generatePid
+import org.slf4j.LoggerFactory
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.stereotype.Service
 import java.lang.IllegalArgumentException
@@ -25,9 +28,10 @@ class AuthService(
     private val hashEncoder: HashEncoder,
     private val refreshTokenRepository: RefreshTokenRepository,
     private val emailVerificationTokenRepository: EmailVerificationTokenRepository,
-    private val emailService: EmailService
+    private val emailService: EmailService,
+    private val passwordResetTokenRepository: PasswordResetTokenRepository
 ) {
-
+    private val logger = LoggerFactory.getLogger(AuthService::class.java)
     data class TokenPair(
         val accessToken: String,
         val refreshToken: String
@@ -138,6 +142,71 @@ class AuthService(
 
         // Send verification email
         emailService.sendVerificationEmail(email, token)
+
+        return true
+    }
+
+    @Transactional
+    fun initiatePasswordReset(email: String): Boolean {
+        val user = userService.getUserByEmail(email)
+            ?: throw IllegalArgumentException("User not found")
+
+        // Generate a token
+        val token = UUID.randomUUID().toString()
+
+        // Delete any existing tokens for this email
+        passwordResetTokenRepository.deleteByEmail(email)
+
+        // Save the new token
+        val passwordResetToken = PasswordResetToken(
+            token = token,
+            email = email
+        )
+        passwordResetTokenRepository.save(passwordResetToken)
+
+        // Send reset email
+        try {
+            emailService.sendPasswordResetEmail(email, token, user.firstName)
+            return true
+        } catch (e: Exception) {
+            logger.error("Failed to send password reset email to $email", e)
+            return false
+        }
+    }
+
+    @Transactional
+    fun resetPassword(token: String, newPassword: String): Boolean {
+        val resetToken = passwordResetTokenRepository.findByToken(token)
+            ?: throw IllegalArgumentException("Invalid or expired password reset token")
+
+        if (resetToken.expiresAt.isBefore(Instant.now())) {
+            passwordResetTokenRepository.delete(resetToken)
+            throw IllegalArgumentException("Password reset token has expired")
+        }
+
+        val user = userService.getUserByEmail(resetToken.email)
+            ?: throw IllegalArgumentException("User not found")
+
+        // Hash the new password
+        val hashedPassword = hashEncoder.encode(newPassword)
+        user.passwordHash = hashedPassword
+        userService.saveUser(user)
+
+        // Delete the token as it's been used
+        passwordResetTokenRepository.delete(resetToken)
+
+        return true
+    }
+
+    fun validateResetToken(token: String): Boolean {
+        val resetToken = passwordResetTokenRepository.findByToken(token)
+            ?: return false
+
+        // Check if token is expired
+        if (resetToken.expiresAt.isBefore(Instant.now())) {
+            passwordResetTokenRepository.delete(resetToken)
+            return false
+        }
 
         return true
     }

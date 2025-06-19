@@ -9,5 +9,5 @@ class HashEncoder {
 
     fun encode(raw: String): String = bycrpt.encode(raw)
 
-    fun matches(raw: String, hashed:String) = bycrpt.matches(raw, hashed)
+    fun matches(raw: String, hashed: String) = bycrpt.matches(raw, hashed)
 }
