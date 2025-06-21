@@ -6,5 +6,11 @@ enum class Action {
     UPDATE,
     DELETE,
     APPROVE,
-    REJECT
+    REJECT,
+    ASSIGN,
+    CHECK,
+    MODERATE,
+    UPLOAD,
+    GENERATE_REPORT,
+    MANAGE
 }

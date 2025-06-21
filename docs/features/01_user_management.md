@@ -13,6 +13,8 @@ CREATE TABLE users (
     email VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     is_active BOOLEAN DEFAULT TRUE,
+    is_email_verified BOOLEAN DEFAULT FALSE,
+    profile_picture_url VARCHAR(512),
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL
 );
@@ -157,7 +159,13 @@ data class User(
     val passwordHash: String,
 
     @Column(name = "is_active", nullable = false)
-    var isActive: Boolean = true
+    var isActive: Boolean = true,
+
+    @Column(name = "is_email_verified", nullable = false)
+    var isEmailVerified: Boolean = false,
+
+    @Column(name = "profile_picture_url", nullable = true, length = 512)
+    var profilePictureUrl: String? = null
 ) : BaseEntity()
 ```
 

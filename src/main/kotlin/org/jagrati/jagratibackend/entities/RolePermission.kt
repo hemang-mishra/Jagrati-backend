@@ -13,7 +13,7 @@ import jakarta.persistence.Table
 data class RolePermission(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long,
+    val id: Long = 0,
 
     @ManyToOne
     @JoinColumn(name = "role_id", nullable = false)

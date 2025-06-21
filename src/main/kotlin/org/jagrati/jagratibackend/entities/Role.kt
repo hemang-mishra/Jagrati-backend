@@ -12,7 +12,7 @@ import jakarta.persistence.Table
 data class Role(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long,
+    val id: Long = 0,
 
     @Column(name = "name", nullable = false, unique = true, length = 50)
     val name: String,

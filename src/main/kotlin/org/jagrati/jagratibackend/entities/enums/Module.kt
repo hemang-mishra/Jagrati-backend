@@ -8,6 +8,10 @@ enum class Module {
     HOMEWORK,
     SCHEDULE,
     POST,
-    RANKING
+    RANKING,
+    SYLLABUS,
+    REMARKS,
+    FACE_AUTH,
+    GROUP_MANAGEMENT
 }
 

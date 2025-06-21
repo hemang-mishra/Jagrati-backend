@@ -2,6 +2,7 @@
 // Feature 1: User Management & Role System
 // =============================================
 
+
 Table users {
   pid varchar(50) [primary key]
   first_name varchar(50) [not null]
@@ -9,9 +10,12 @@ Table users {
   email varchar(255) [not null, unique]
   password_hash varchar(255) [not null]
   is_active boolean [default: true]
+  is_email_verified boolean [default: false]
+  profile_picture_url varchar(512)
   created_at timestamp [not null]
   updated_at timestamp [not null]
 }
+
 
 Table roles {
   id bigint [primary key]
@@ -114,15 +118,16 @@ Table students {
   pid varchar(50) [primary key]
   first_name varchar(50) [not null]
   last_name varchar(50) [not null]
-  age int [not null]
+  year_of_birth int
   gender varchar(10) [not null, note: 'MALE, FEMALE, OTHER']
   profile_pic varchar(255)
-  school_class varchar(20) [not null]
+  school_class varchar(20)
   village_id bigint [not null]
   group_id bigint [not null]
   primary_contact_no varchar(20)
   secondary_contact_no varchar(20)
-  guardian_name varchar(100)
+  fathers_name varchar(100)
+  mothers_name varchar(100)
   is_active boolean [default: true]
   created_at timestamp [not null]
   updated_at timestamp [not null]
@@ -154,7 +159,6 @@ Table volunteers {
   state varchar(100)
   date_of_birth date [not null]
   contact_number varchar(20)
-  profile_image_url varchar(255)
   college varchar(100)
   branch varchar(100)
   year_of_study int
@@ -165,8 +169,22 @@ Table volunteers {
 
 Table face_data {
   id bigint [primary key]
-  student_pid varchar(50) [not null]
-  face_encoding text [not null]
+  pid varchar(50) [not null, note: 'Can be student or volunteer PID']
+  name varchar(255)
+  width int
+  height int
+  face_width int
+  face_height int
+  top int
+  left int
+  right int
+  bottom int
+  landmarks text [note: 'Serialized list of FaceLandmark objects']
+  smiling_probability float
+  left_eye_open_probability float
+  right_eye_open_probability float
+  timestamp varchar(50)
+  time bigint
   created_at timestamp [not null]
   updated_at timestamp [not null]
 }
@@ -437,7 +455,8 @@ Ref: permissions.id < role_permissions.permission_id
 Ref: volunteers.pid > users.pid
 Ref: students.village_id > villages.id
 Ref: students.group_id > groups.id
-Ref: face_data.student_pid > students.pid
+Ref: face_data.pid > students.pid
+Ref: face_data.pid > volunteers.pid
 Ref: student_group_history.student_pid > students.pid
 Ref: student_group_history.group_id > groups.id
 Ref: student_group_history.assigned_by_pid > volunteers.pid
@@ -488,6 +507,9 @@ Ref: remark_votes.volunteer_pid > volunteers.pid
 Ref: volunteer_activities.volunteer_pid > volunteers.pid
 Ref: volunteer_activities.activity_type_id > activity_types.id
 Ref: volunteer_activities.session_id > class_sessions.id
+Ref: student_proficiency.student_pid > students.pid
+Ref: student_proficiency.topic_id > topics.id
+Ref: student_proficiency.last_updated_by_pid > volunteers.pid
 
 // Feature 9: Posts & Social Features References
 Ref: posts.volunteer_pid > volunteers.pid

@@ -53,6 +53,10 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
     implementation("org.springframework.security:spring-security-oauth2-jose")
     implementation("com.google.api-client:google-api-client:2.8.0")
+
+    // SpringDoc OpenAPI - with compatible versions
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9")
+    implementation("org.springdoc:springdoc-openapi-starter-common:2.8.9")
 }
 
 kotlin {
