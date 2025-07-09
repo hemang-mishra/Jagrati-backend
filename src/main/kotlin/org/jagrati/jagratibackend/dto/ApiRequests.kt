@@ -11,6 +11,7 @@ data class RegisterRequest(
     @field:NotBlank val firstName: String,
     @field:NotBlank val lastName: String
 )
+
 data class ResendVerificationRequest(val email: String)
 data class ForgotPasswordRequest(val email: String)
 data class GoogleLoginRequest(val idToken: String)

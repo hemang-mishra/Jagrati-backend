@@ -8,4 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository
 interface RolePermissionRepository: JpaRepository<RolePermission, Long> {
     fun existsByRoleNameInAndPermissionName(roles: List<String>, permission: String): Boolean
     fun findByRoleAndPermission(role: Role, permission: Permission): RolePermission?
+    fun findByRole(role: Role): List<RolePermission>
+    fun findByPermission(permission: Permission): List<RolePermission>
 }

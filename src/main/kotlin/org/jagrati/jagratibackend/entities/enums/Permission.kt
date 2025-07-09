@@ -10,15 +10,28 @@ enum class AllPermissions(val module: Module, val action: Action) {
     STUDENT_VIEW_PROFICIENCY(Module.STUDENT, Action.READ),
     STUDENT_UPDATE_PROFICIENCY(Module.STUDENT, Action.UPDATE),
 
-    // VOLUNTEER Module
-    VOLUNTEER_CREATE(Module.VOLUNTEER, Action.CREATE),
-    VOLUNTEER_READ(Module.VOLUNTEER, Action.READ),
-    VOLUNTEER_UPDATE(Module.VOLUNTEER, Action.UPDATE),
-    VOLUNTEER_DELETE(Module.VOLUNTEER, Action.DELETE),
-    VOLUNTEER_APPROVE_REQUEST(Module.VOLUNTEER, Action.APPROVE),
-    VOLUNTEER_REJECT_REQUEST(Module.VOLUNTEER, Action.REJECT),
-    VOLUNTEER_ASSIGN_ROLES(Module.VOLUNTEER, Action.ASSIGN),
-    VOLUNTEER_MANAGE_PERMISSIONS(Module.VOLUNTEER, Action.MANAGE),
+    // --- Role Management Screen Permissions ---
+    ROLE_VIEW(Module.VOLUNTEER, Action.READ),
+    ROLE_CREATE(Module.VOLUNTEER, Action.CREATE),
+    ROLE_UPDATE(Module.VOLUNTEER, Action.UPDATE),
+    ROLE_DEACTIVATE(Module.VOLUNTEER, Action.DELETE),
+
+    // --- Permission List & Details Screen Permissions ---
+    PERMISSION_VIEW(Module.VOLUNTEER, Action.READ),
+    PERMISSION_ASSIGN_ROLE(Module.VOLUNTEER, Action.ASSIGN),
+    PERMISSION_REMOVE_ROLE(Module.VOLUNTEER, Action.DELETE),
+
+    // --- User Management Screen Permissions ---
+    USER_VIEW(Module.VOLUNTEER, Action.READ),
+    USER_ROLE_ASSIGN(Module.VOLUNTEER, Action.ASSIGN),
+    USER_ROLE_REMOVE(Module.VOLUNTEER, Action.DELETE),
+
+    // --- Volunteer Requests Screen Permissions ---
+    VOLUNTEER_REQUEST_VIEW(Module.VOLUNTEER, Action.READ),
+    VOLUNTEER_REQUEST_APPROVE(Module.VOLUNTEER, Action.APPROVE),
+    VOLUNTEER_REQUEST_REJECT(Module.VOLUNTEER, Action.REJECT),
+
+    VOLUNTEER_REQUEST(Module.VOLUNTEER, Action.REQUEST),
 
     // ATTENDANCE Module
     ATTENDANCE_MARK_STUDENT(Module.ATTENDANCE, Action.CREATE),

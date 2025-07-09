@@ -18,7 +18,7 @@ data class Permission(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
 
-    @Column(name = "name", nullable = false, unique = true, length = 50)
+    @Column(name = "name", nullable = false, length = 50)
     val name: String,
 
     @Column(name = "description")

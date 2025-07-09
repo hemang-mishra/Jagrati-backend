@@ -50,6 +50,8 @@ class DataInitializationConfig(
     fun initializeDatabase() = CommandLineRunner {
         initializeRolesAndPermissions()
         initializeSuperAdmin()
+        // TODO: REMOVE IN PRODUCTION - Test data creation
+        createTestData()
     }
 
     @Transactional
@@ -191,6 +193,11 @@ class DataInitializationConfig(
                 AllPermissions.STUDENT_VIEW_PROFICIENCY,
                 AllPermissions.STUDENT_UPDATE_PROFICIENCY,
 
+                AllPermissions.PERMISSION_VIEW,
+
+                // Volunteer Request Permissions
+                AllPermissions.VOLUNTEER_REQUEST,
+
                 // Attendance permissions
                 AllPermissions.ATTENDANCE_MARK_STUDENT,
                 AllPermissions.ATTENDANCE_READ,
@@ -250,7 +257,9 @@ class DataInitializationConfig(
                 AllPermissions.STUDENT_READ,
                 AllPermissions.ATTENDANCE_READ,
                 AllPermissions.SYLLABUS_READ,
-                AllPermissions.POST_READ
+                AllPermissions.POST_READ,
+                AllPermissions.PERMISSION_VIEW,
+                AllPermissions.USER_VIEW
             )
 
             userPermissions.forEach { allPermission ->
@@ -269,6 +278,172 @@ class DataInitializationConfig(
             }
         }
     }
+
+    // TODO: REMOVE IN PRODUCTION - This method creates test data for development/testing purposes only
+    @Transactional
+    fun createTestData() {
+        logger.info("Creating test data for development/testing purposes")
+
+        // Create test users (regular users with minimal permissions)
+        createTestUsers()
+
+        // Create test volunteers
+        createTestVolunteers()
+
+        // Create extra super admin for testing
+        createExtraSuperAdmin()
+
+        logger.info("Test data creation completed")
+    }
+
+    // TODO: REMOVE IN PRODUCTION - Creates 2 test users
+    private fun createTestUsers() {
+        val testUsers = listOf(
+            TestUser("user1@test.com", "user1", "John", "Doe", "USER_001"),
+            TestUser("user2@test.com", "user2", "Jane", "Smith", "USER_002")
+        )
+
+        testUsers.forEach { testUser ->
+            val existingUser = userRepository.findByEmail(testUser.email)
+            if (existingUser == null) {
+                val hashedPassword = hashEncoder.encode(testUser.password)
+                val user = User(
+                    pid = testUser.pid,
+                    firstName = testUser.firstName,
+                    lastName = testUser.lastName,
+                    email = testUser.email,
+                    passwordHash = hashedPassword,
+                    isActive = true,
+                    isEmailVerified = true
+                )
+                val savedUser = userRepository.save(user)
+
+                // Assign USER role
+                val userRole = roleRepository.findByName(InitialRoles.USER.roleString)
+                if (userRole != null) {
+                    val userRoleAssignment = UserRole(
+                        id = 0,
+                        user = savedUser,
+                        role = userRole,
+                        assignedBy = savedUser
+                    )
+                    userRoleRepository.save(userRoleAssignment)
+                }
+
+                logger.info("Created test user: ${testUser.email} (Password: ${testUser.password})")
+            }
+        }
+    }
+
+    // TODO: REMOVE IN PRODUCTION - Creates 5 test volunteers
+    private fun createTestVolunteers() {
+        val testVolunteers = listOf(
+            TestVolunteer("vol1@test.com", "vol1", "Alice", "Johnson", "VOL_001", "2023CS001", "Computer Science", "2023"),
+            TestVolunteer("vol2@test.com", "vol2", "Bob", "Williams", "VOL_002", "2023CS002", "Computer Science", "2023"),
+            TestVolunteer("vol3@test.com", "vol3", "Charlie", "Brown", "VOL_003", "2023CS003", "Computer Science", "2023"),
+            TestVolunteer("vol4@test.com", "vol4", "Diana", "Davis", "VOL_004", "2023CS004", "Computer Science", "2023"),
+            TestVolunteer("vol5@test.com", "vol5", "Eve", "Miller", "VOL_005", "2023CS005", "Computer Science", "2023")
+        )
+
+        testVolunteers.forEach { testVolunteer ->
+            val existingUser = userRepository.findByEmail(testVolunteer.email)
+            if (existingUser == null) {
+                val hashedPassword = hashEncoder.encode(testVolunteer.password)
+                val user = User(
+                    pid = testVolunteer.pid,
+                    firstName = testVolunteer.firstName,
+                    lastName = testVolunteer.lastName,
+                    email = testVolunteer.email,
+                    passwordHash = hashedPassword,
+                    isActive = true,
+                    isEmailVerified = true
+                )
+                val savedUser = userRepository.save(user)
+
+                // Assign VOLUNTEER role
+                val volunteerRole = roleRepository.findByName(InitialRoles.VOLUNTEER.roleString)
+                if (volunteerRole != null) {
+                    val userRoleAssignment = UserRole(
+                        id = 0,
+                        user = savedUser,
+                        role = volunteerRole,
+                        assignedBy = savedUser
+                    )
+                    userRoleRepository.save(userRoleAssignment)
+                }
+
+                logger.info("Created test volunteer: ${testVolunteer.email} (Password: ${testVolunteer.password})")
+            }
+        }
+    }
+
+    // TODO: REMOVE IN PRODUCTION - Creates extra super admin for testing
+    private fun createExtraSuperAdmin() {
+        val extraSuperAdmin = TestSuperAdmin(
+            email = "super2@test.com",
+            password = "super2",
+            firstName = "Extra",
+            lastName = "SuperAdmin",
+            pid = "SUPER_ADMIN_002"
+        )
+
+        val existingUser = userRepository.findByEmail(extraSuperAdmin.email)
+        if (existingUser == null) {
+            val hashedPassword = hashEncoder.encode(extraSuperAdmin.password)
+            val user = User(
+                pid = extraSuperAdmin.pid,
+                firstName = extraSuperAdmin.firstName,
+                lastName = extraSuperAdmin.lastName,
+                email = extraSuperAdmin.email,
+                passwordHash = hashedPassword,
+                isActive = true,
+                isEmailVerified = true
+            )
+            val savedUser = userRepository.save(user)
+
+            // Assign SUPER_ADMIN role
+            val superAdminRole = roleRepository.findByName(InitialRoles.SUPER_ADMIN.roleString)
+            if (superAdminRole != null) {
+                val userRoleAssignment = UserRole(
+                    id = 0,
+                    user = savedUser,
+                    role = superAdminRole,
+                    assignedBy = savedUser
+                )
+                userRoleRepository.save(userRoleAssignment)
+            }
+
+            logger.info("Created extra super admin: ${extraSuperAdmin.email} (Password: ${extraSuperAdmin.password})")
+        }
+    }
+
+    // TODO: REMOVE IN PRODUCTION - Data classes for test users
+    private data class TestUser(
+        val email: String,
+        val password: String,
+        val firstName: String,
+        val lastName: String,
+        val pid: String
+    )
+
+    private data class TestVolunteer(
+        val email: String,
+        val password: String,
+        val firstName: String,
+        val lastName: String,
+        val pid: String,
+        val rollNumber: String,
+        val programme: String,
+        val batch: String
+    )
+
+    private data class TestSuperAdmin(
+        val email: String,
+        val password: String,
+        val firstName: String,
+        val lastName: String,
+        val pid: String
+    )
 }
 
 enum class InitialRoles(val roleString: String, val description: String) {

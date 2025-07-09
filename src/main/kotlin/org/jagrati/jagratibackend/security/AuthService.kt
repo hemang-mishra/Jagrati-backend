@@ -12,6 +12,7 @@ import org.jagrati.jagratibackend.entities.User
 import org.jagrati.jagratibackend.repository.EmailVerificationTokenRepository
 import org.jagrati.jagratibackend.repository.PasswordResetTokenRepository
 import org.jagrati.jagratibackend.repository.RefreshTokenRepository
+import org.jagrati.jagratibackend.repository.UserRoleRepository
 import org.jagrati.jagratibackend.services.EmailService
 import org.jagrati.jagratibackend.services.UserService
 import org.jagrati.jagratibackend.util.PidGenerator
@@ -89,6 +90,9 @@ class AuthService(
         val user = userService.getUserByEmail(email) ?: throw BadCredentialsException("Invalid credentials.")
         if (!hashEncoder.matches(password, user.passwordHash)) {
             throw BadCredentialsException("Invalid credentials.")
+        }
+        if(!user.isEmailVerified){
+            throw IllegalStateException("Email verification is pending.")
         }
         val newAccessToken = jwtService.generateAccessToken(user)
         val newRefreshToken = jwtService.generateRefreshToken(user)
@@ -274,8 +278,6 @@ class AuthService(
                 userService.saveUser(user)
             }
         }
-
-
         return user
     }
 

@@ -1,5 +1,8 @@
 package org.jagrati.jagratibackend.dto
 
+import java.time.LocalDate
+import java.time.LocalDateTime
+
 data class MessageResponse(val message: String)
 data class GoogleLoginUrlResponse(val url: String)
 data class SecuredResponse(

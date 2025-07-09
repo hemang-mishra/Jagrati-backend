@@ -13,7 +13,7 @@ import jakarta.persistence.Table
 data class UserRole(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long,
+    val id: Long = 0,
 
     @ManyToOne
     @JoinColumn(name = "user_pid", nullable = false)

@@ -9,5 +9,7 @@ interface UserRepository: JpaRepository<User, String> {
 
     fun findUserByPid(pid: String): User?
 
+    fun findByPid(pid: String): User?
+
     fun findByEmail(email: String): User?
 }

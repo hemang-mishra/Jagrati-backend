@@ -7,6 +7,7 @@ import jakarta.persistence.Id
 import jakarta.persistence.Index
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
+import org.hibernate.annotations.Formula
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
@@ -42,11 +43,19 @@ data class User(
     @Column(name = "profile_picture_url", nullable = true, length = 512)
     var profilePictureUrl: String? = null,
 
-    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER)
-    val userRoles: Set<UserRole> = emptySet()
-) : BaseEntity(),UserDetails{
-    override fun getAuthorities(): Collection<GrantedAuthority?>? {
-        return userRoles.map { SimpleGrantedAuthority(it.role.name) }
+    // Using Formula to load role names directly in a single query
+    @Formula("""COALESCE(
+        (SELECT array_agg(r.name)
+         FROM user_roles ur 
+         JOIN roles r ON ur.role_id = r.id 
+         WHERE ur.user_pid = pid), '{}')::text[]
+    """)
+    private val roleNames: List<String>? = null
+) : BaseEntity(), UserDetails {
+
+    override fun getAuthorities(): Collection<GrantedAuthority> {
+        // Use the directly loaded role names instead of navigating through userRoles
+        return roleNames?.map { SimpleGrantedAuthority(it.trim()) } ?: emptyList()
     }
 
     override fun getPassword(): String? {
@@ -55,5 +64,21 @@ data class User(
 
     override fun getUsername(): String? {
         return pid
+    }
+
+    override fun isAccountNonExpired(): Boolean {
+        return true
+    }
+
+    override fun isAccountNonLocked(): Boolean {
+        return true
+    }
+
+    override fun isCredentialsNonExpired(): Boolean {
+        return true
+    }
+
+    override fun isEnabled(): Boolean {
+        return isActive
     }
 }

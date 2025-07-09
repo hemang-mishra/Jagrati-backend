@@ -15,4 +15,5 @@ interface UserRoleRepository: JpaRepository<UserRole, Long> {
     fun findByUserAndRole(user: User, role: Role): UserRole?
     fun existsByUserAndRole(user: User, role: Role): Boolean
     fun deleteByUserAndRole(user: User, role: Role)
+    fun countByRole(role: Role): Long
 }

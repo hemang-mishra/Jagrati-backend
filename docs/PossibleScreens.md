@@ -11,7 +11,8 @@ Volunteer access level:
 * Edit profile (by the user itself)
 * Student Profile. (delete student option for super-admins only)
 * Student Group transitions (showing how a student's group has changed overtime, kind of we can relate to student progress)
-*
+* Add/Edit facial data [no design required rn]
+* View Attendance [might take some time to think of design] (refer figma design for current ideation)
 
 
 Permission requried: (They won't be part of the main app, kind of a separate section of the app, figma design not required.)

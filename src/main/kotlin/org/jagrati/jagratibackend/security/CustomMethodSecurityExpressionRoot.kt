@@ -5,6 +5,7 @@ import org.springframework.security.access.expression.SecurityExpressionRoot
 import org.springframework.security.access.expression.method.MethodSecurityExpressionOperations
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.GrantedAuthority
+import java.util.logging.Logger
 
 class CustomMethodSecurityExpressionRoot(
     private val authentication: Authentication,
@@ -14,14 +15,16 @@ class CustomMethodSecurityExpressionRoot(
     private var filterObject: Any? = null
     private var returnObject: Any? = null
     private var target: Any? = null
+    private val logger = Logger.getLogger(CustomMethodSecurityExpressionRoot::class.java.name)
 
     fun hasPermission(permissionName: String): Boolean {
         if(!authentication.isAuthenticated) return false
-
+        logger.info("Checking permission $permissionName")
+        authentication.authorities.forEach {
+            logger.info("Authority $it")
+        }
         val roles = authentication.authorities
             .map { (it as GrantedAuthority).authority}
-            .filter { it.startsWith("ROLE_") }
-            .map {it.substring(5)}
 
         return rolePermissionRepo.existsByRoleNameInAndPermissionName(roles, permissionName)
     }

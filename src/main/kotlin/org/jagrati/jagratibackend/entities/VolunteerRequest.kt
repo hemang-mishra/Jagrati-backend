@@ -22,7 +22,7 @@ data class VolunteerRequest(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long,
 
-    @Column(name = "roll_number", length = 20, unique = true)
+    @Column(name = "roll_number", length = 20)
     val rollNumber: String?,
 
     @Column(name = "first_name", nullable = false, length = 50)
@@ -81,14 +81,17 @@ data class VolunteerRequest(
     @Enumerated(EnumType.STRING)
     var status: RequestStatus,
 
+    @Column(name = "reason")
+    var reason: String? = null,
+
     @ManyToOne
     @JoinColumn(name = "requested_by_pid", nullable = false)
     val requestedBy: User,
 
     @ManyToOne
     @JoinColumn(name = "reviewed_by_pid")
-    val reviewedBy: User?,
+    var reviewedBy: User?,
 
     @Column(name = "reviewed_at")
-    val reviewedAt: LocalDateTime?
+    var reviewedAt: LocalDateTime?
 ) : BaseEntity()

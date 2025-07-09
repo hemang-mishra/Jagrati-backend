@@ -9,4 +9,5 @@ interface RoleRepository: JpaRepository<Role, Long> {
     fun findByName(name: String): Role?
     fun findByNameIn(names: List<String>): List<Role>
     fun existsByName(name: String): Boolean
+    fun findByIsActiveTrue(): List<Role>
 }

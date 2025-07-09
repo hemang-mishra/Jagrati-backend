@@ -18,5 +18,8 @@ data class Role(
     val name: String,
 
     @Column(name = "description")
-    val description: String?
+    val description: String?,
+
+    @Column(name = "is_active", nullable = false)
+    var isActive: Boolean = true
 ) : BaseEntity()

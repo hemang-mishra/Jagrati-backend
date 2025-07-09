@@ -12,5 +12,6 @@ enum class Action {
     MODERATE,
     UPLOAD,
     GENERATE_REPORT,
-    MANAGE
+    MANAGE,
+    REQUEST
 }
