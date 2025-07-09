@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Verification Failed</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .error-card {
+            background: linear-gradient(180deg, #ffffff 0%, #fef2f2 100%);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(127, 29, 29, 0.15);
+            padding: 60px 40px;
+            margin-top: 40px;
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(220, 38, 38, 0.1);
+        }
+
+        .error-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(135deg, #7f1d1d 0%, #dc2626 25%, #ef4444 50%, #f87171 75%, #fca5a5 100%);
+        }
+
+        .error-card::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(220, 38, 38, 0.03) 0%, transparent 70%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.1; transform: scale(1.1); }
+        }
+
+        .error-icon {
+            font-size: 80px;
+            margin-bottom: 30px;
+            position: relative;
+            z-index: 2;
+            text-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
+            animation: shake 1s ease-in-out infinite;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-2px); }
+            75% { transform: translateX(2px); }
+        }
+
+        h1 {
+            background: linear-gradient(135deg, #7f1d1d 0%, #dc2626 50%, #ef4444 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 20px;
+            letter-spacing: -0.5px;
+            position: relative;
+            z-index: 2;
+        }
+
+        p {
+            font-size: 16px;
+            color: #4a5568;
+            margin-bottom: 20px;
+            line-height: 1.7;
+            position: relative;
+            z-index: 2;
+        }
+
+        .error-message {
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+            border: 2px solid;
+            border-image: linear-gradient(135deg, #dc2626 0%, #ef4444 50%, #f87171 100%) 1;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 25px 0;
+            position: relative;
+            z-index: 2;
+            box-shadow: 0 8px 25px rgba(220, 38, 38, 0.1);
+        }
+
+        .error-message h3 {
+            background: linear-gradient(135deg, #7f1d1d 0%, #dc2626 50%, #ef4444 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .error-message p {
+            color: #7f1d1d;
+            font-size: 15px;
+            font-weight: 500;
+            margin-bottom: 0;
+        }
+
+        .icon {
+            margin-right: 8px;
+        }
+
+        .help-section {
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+            position: relative;
+            z-index: 2;
+            border: 1px solid #e2e8f0;
+        }
+
+        .help-section h3 {
+            color: #2d3748;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .help-section ul {
+            text-align: left;
+            color: #4a5568;
+            font-size: 14px;
+            line-height: 1.6;
+            list-style: none;
+            padding: 0;
+        }
+
+        .help-section li {
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .help-section li::before {
+            content: '•';
+            color: #dc2626;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+
+        .button {
+            display: inline-block;
+            background: linear-gradient(135deg, #7f1d1d 0%, #dc2626 30%, #ef4444 70%, #f87171 100%);
+            color: white;
+            padding: 16px 32px;
+            border-radius: 12px;
+            text-decoration: none;
+            margin-top: 20px;
+            font-weight: 700;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.4s ease;
+            box-shadow: 0 8px 25px rgba(127, 29, 29, 0.4);
+            position: relative;
+            z-index: 2;
+            overflow: hidden;
+        }
+
+        .button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .button:hover::before {
+            left: 100%;
+        }
+
+        .button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(127, 29, 29, 0.5);
+            background: linear-gradient(135deg, #991b1b 0%, #dc2626 30%, #ef4444 70%, #f87171 100%);
+        }
+
+        .button-secondary {
+            background: linear-gradient(135deg, #4a5568 0%, #718096 100%);
+            margin-left: 10px;
+            box-shadow: 0 8px 25px rgba(74, 85, 104, 0.3);
+        }
+
+        .button-secondary:hover {
+            background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+            box-shadow: 0 12px 35px rgba(74, 85, 104, 0.4);
+        }
+
+        @media (max-width: 600px) {
+            .error-card {
+                margin: 0;
+                border-radius: 0;
+                padding: 40px 20px;
+            }
+
+            h1 {
+                font-size: 28px;
+            }
+
+            .error-icon {
+                font-size: 64px;
+            }
+
+            .button, .button-secondary {
+                display: block;
+                width: 100%;
+                margin: 10px 0;
+                padding: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="error-card">
+    <div class="error-icon">❌</div>
+    <h1>Verification Failed</h1>
+    <div class="error-message">
+        <h3><span class="icon">⚠️</span>Unable to Verify Email</h3>
+        <p th:text="${errorMessage}">
+            The verification link may have expired or is invalid. We need to verify your email to ensure you can receive updates about our educational programs.
+        </p>
+    </div>
+
+    <div class="help-section">
+        <h3><span class="icon">💡</span>What can you do?</h3>
+        <ul>
+            <li>Check if the verification link is complete and hasn't been broken across multiple lines</li>
+            <li>Request a new verification email if the current link has expired</li>
+            <li>Make sure you're using the most recent verification email</li>
+            <li>Contact our volunteer support team if you continue experiencing issues</li>
+        </ul>
+    </div>
+
+    <p>Don't worry, this happens sometimes. We're here to help you join our mission to educate children!</p>
+
+    <div style="margin-top: 30px;">
+        <a href="#" class="button">🔄 Request New Link</a>
+        <a href="#" class="button button-secondary">📧 Contact Support</a>
+    </div>
+</div>
+</body>
+</html>

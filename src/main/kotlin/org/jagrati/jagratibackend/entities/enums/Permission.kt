@@ -1,0 +1,112 @@
+package org.jagrati.jagratibackend.entities.enums
+
+enum class AllPermissions(val module: Module, val action: Action) {
+    // STUDENT Module
+    STUDENT_CREATE(Module.STUDENT, Action.CREATE),
+    STUDENT_READ(Module.STUDENT, Action.READ),
+    STUDENT_UPDATE(Module.STUDENT, Action.UPDATE),
+    STUDENT_DELETE(Module.STUDENT, Action.DELETE),
+    STUDENT_ASSIGN_GROUP(Module.STUDENT, Action.ASSIGN),
+    STUDENT_VIEW_PROFICIENCY(Module.STUDENT, Action.READ),
+    STUDENT_UPDATE_PROFICIENCY(Module.STUDENT, Action.UPDATE),
+
+    // --- Role Management Screen Permissions ---
+    ROLE_VIEW(Module.VOLUNTEER, Action.READ),
+    ROLE_CREATE(Module.VOLUNTEER, Action.CREATE),
+    ROLE_UPDATE(Module.VOLUNTEER, Action.UPDATE),
+    ROLE_DEACTIVATE(Module.VOLUNTEER, Action.DELETE),
+
+    // --- Permission List & Details Screen Permissions ---
+    PERMISSION_VIEW(Module.VOLUNTEER, Action.READ),
+    PERMISSION_ASSIGN_ROLE(Module.VOLUNTEER, Action.ASSIGN),
+    PERMISSION_REMOVE_ROLE(Module.VOLUNTEER, Action.DELETE),
+
+    // --- User Management Screen Permissions ---
+    USER_VIEW(Module.VOLUNTEER, Action.READ),
+    USER_ROLE_ASSIGN(Module.VOLUNTEER, Action.ASSIGN),
+    USER_ROLE_REMOVE(Module.VOLUNTEER, Action.DELETE),
+
+    // --- Volunteer Requests Screen Permissions ---
+    VOLUNTEER_REQUEST_VIEW(Module.VOLUNTEER, Action.READ),
+    VOLUNTEER_REQUEST_APPROVE(Module.VOLUNTEER, Action.APPROVE),
+    VOLUNTEER_REQUEST_REJECT(Module.VOLUNTEER, Action.REJECT),
+
+    VOLUNTEER_REQUEST(Module.VOLUNTEER, Action.REQUEST),
+
+    // ATTENDANCE Module
+    ATTENDANCE_MARK_STUDENT(Module.ATTENDANCE, Action.CREATE),
+    ATTENDANCE_MARK_VOLUNTEER(Module.ATTENDANCE, Action.CREATE),
+    ATTENDANCE_READ(Module.ATTENDANCE, Action.READ),
+    ATTENDANCE_UPDATE(Module.ATTENDANCE, Action.UPDATE),
+    ATTENDANCE_DELETE(Module.ATTENDANCE, Action.DELETE),
+    ATTENDANCE_GENERATE_REPORTS(Module.ATTENDANCE, Action.GENERATE_REPORT),
+
+    // CLASSWORK Module
+    CLASSWORK_CREATE(Module.CLASSWORK, Action.CREATE),
+    CLASSWORK_READ(Module.CLASSWORK, Action.READ),
+    CLASSWORK_UPDATE(Module.CLASSWORK, Action.UPDATE),
+    CLASSWORK_DELETE(Module.CLASSWORK, Action.DELETE),
+    CLASSWORK_UPLOAD_IMAGES(Module.CLASSWORK, Action.UPLOAD),
+
+    // HOMEWORK Module
+    HOMEWORK_ASSIGN(Module.HOMEWORK, Action.CREATE),
+    HOMEWORK_READ(Module.HOMEWORK, Action.READ),
+    HOMEWORK_UPDATE(Module.HOMEWORK, Action.UPDATE),
+    HOMEWORK_DELETE(Module.HOMEWORK, Action.DELETE),
+    HOMEWORK_CHECK(Module.HOMEWORK, Action.CHECK),
+    HOMEWORK_APPROVE(Module.HOMEWORK, Action.APPROVE),
+
+    // SCHEDULE Module
+    SCHEDULE_CREATE(Module.SCHEDULE, Action.CREATE),
+    SCHEDULE_READ(Module.SCHEDULE, Action.READ),
+    SCHEDULE_UPDATE(Module.SCHEDULE, Action.UPDATE),
+    SCHEDULE_DELETE(Module.SCHEDULE, Action.DELETE),
+    SCHEDULE_APPROVE_REQUEST(Module.SCHEDULE, Action.APPROVE),
+    SCHEDULE_REJECT_REQUEST(Module.SCHEDULE, Action.REJECT),
+
+    // POST Module
+    POST_CREATE(Module.POST, Action.CREATE),
+    POST_READ(Module.POST, Action.READ),
+    POST_UPDATE(Module.POST, Action.UPDATE),
+    POST_DELETE(Module.POST, Action.DELETE),
+    POST_MODERATE(Module.POST, Action.MODERATE),
+    POST_DELETE_ANY(Module.POST, Action.DELETE),
+
+    // RANKING Module
+    RANKING_VIEW(Module.RANKING, Action.READ),
+    RANKING_UPDATE(Module.RANKING, Action.UPDATE),
+    RANKING_MANAGE_ACTIVITIES(Module.RANKING, Action.MANAGE),
+    RANKING_GENERATE_REPORTS(Module.RANKING, Action.GENERATE_REPORT),
+
+    // SYLLABUS Module
+    SYLLABUS_CREATE(Module.SYLLABUS, Action.CREATE),
+    SYLLABUS_READ(Module.SYLLABUS, Action.READ),
+    SYLLABUS_UPDATE(Module.SYLLABUS, Action.UPDATE),
+    SYLLABUS_DELETE(Module.SYLLABUS, Action.DELETE),
+    SYLLABUS_MANAGE_RESOURCES(Module.SYLLABUS, Action.MANAGE),
+
+    // REMARKS Module
+    REMARKS_CREATE(Module.REMARKS, Action.CREATE),
+    REMARKS_READ(Module.REMARKS, Action.READ),
+    REMARKS_UPDATE(Module.REMARKS, Action.UPDATE),
+    REMARKS_DELETE(Module.REMARKS, Action.DELETE),
+    REMARKS_VOTE(Module.REMARKS, Action.UPDATE),
+
+    // FACE_AUTH Module
+    FACE_AUTH_CREATE(Module.FACE_AUTH, Action.CREATE),
+    FACE_AUTH_READ(Module.FACE_AUTH, Action.READ),
+    FACE_AUTH_UPDATE(Module.FACE_AUTH, Action.UPDATE),
+    FACE_AUTH_DELETE(Module.FACE_AUTH, Action.DELETE),
+    FACE_AUTH_VERIFY(Module.FACE_AUTH, Action.CHECK),
+
+    // GROUP_MANAGEMENT Module
+    GROUP_CREATE(Module.GROUP_MANAGEMENT, Action.CREATE),
+    GROUP_READ(Module.GROUP_MANAGEMENT, Action.READ),
+    GROUP_UPDATE(Module.GROUP_MANAGEMENT, Action.UPDATE),
+    GROUP_DELETE(Module.GROUP_MANAGEMENT, Action.DELETE),
+    GROUP_ASSIGN_STUDENTS(Module.GROUP_MANAGEMENT, Action.ASSIGN),
+    GROUP_MANAGE_VOLUNTEERS(Module.GROUP_MANAGEMENT, Action.MANAGE);
+
+    fun getPermissionName(): String = this.name
+    fun getDescription(): String = "${action.name.lowercase().replaceFirstChar { it.uppercase() }} ${module.name.lowercase().replaceFirstChar { it.uppercase() }}"
+}

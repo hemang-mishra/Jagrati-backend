@@ -42,6 +42,21 @@ dependencies {
     implementation("io.jsonwebtoken:jjwt-api:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
+
+    //For mails
+    implementation("org.springframework.boot:spring-boot-starter-mail")
+
+    //Templates
+    implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
+
+    //OAuth2
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
+    implementation("org.springframework.security:spring-security-oauth2-jose")
+    implementation("com.google.api-client:google-api-client:2.8.0")
+
+    // SpringDoc OpenAPI - with compatible versions
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9")
+    implementation("org.springdoc:springdoc-openapi-starter-common:2.8.9")
 }
 
 kotlin {

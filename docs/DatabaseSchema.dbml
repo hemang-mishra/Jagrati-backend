@@ -1,0 +1,583 @@
+// =============================================
+// Feature 1: User Management & Role System
+// =============================================
+
+
+Table users {
+  pid varchar(50) [primary key]
+  first_name varchar(50) [not null]
+  last_name varchar(50) [not null]
+  email varchar(255) [not null, unique]
+  password_hash varchar(255) [not null]
+  is_active boolean [default: true]
+  is_email_verified boolean [default: false]
+  profile_picture_url varchar(512)
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+
+Table roles {
+  id bigint [primary key]
+  name varchar(50) [not null, unique]
+  description text
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+Table permissions {
+  id bigint [primary key]
+  name varchar(50) [not null, unique]
+  description text
+  module varchar(50) [not null, note: 'The module this permission belongs to (e.g., STUDENT, VOLUNTEER, ATTENDANCE)']
+  action varchar(50) [not null, note: 'The action this permission allows (e.g., CREATE, READ, UPDATE, DELETE)']
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+Table role_permissions {
+  id bigint [primary key]
+  role_id bigint [not null]
+  permission_id bigint [not null]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+Table user_roles {
+  id bigint [primary key]
+  user_pid varchar(50) [not null]
+  role_id bigint [not null]
+  assigned_by_pid varchar(50) [not null]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+Table volunteer_requests {
+  id bigint [primary key]
+  roll_number varchar(20) [unique]
+  first_name varchar(50) [not null]
+  last_name varchar(50) [not null]
+  gender varchar(10) [not null, note: 'MALE, FEMALE, OTHER']
+  alternate_email varchar(255)
+  batch varchar(20)
+  programme varchar(100)
+  street_address_1 text
+  street_address_2 text
+  pincode varchar(10)
+  city varchar(100)
+  state varchar(100)
+  date_of_birth date [not null]
+  contact_number varchar(20)
+  profile_image_url varchar(255)
+  college varchar(100)
+  branch varchar(100)
+  year_of_study int
+  status varchar(20) [not null, note: 'PENDING, APPROVED, REJECTED']
+  requested_by_pid varchar(50) [not null, note: 'User who created the request']
+  reviewed_by_pid varchar(50) [note: 'Admin who reviewed the request']
+  reviewed_at timestamp
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+Table role_transitions {
+  id bigint [primary key]
+  user_pid varchar(50) [not null]
+  from_role_id bigint [not null]
+  to_role_id bigint [not null]
+  transition_type varchar(20) [not null, note: 'UPGRADE, DOWNGRADE']
+  status varchar(20) [not null, note: 'PENDING, APPROVED, REJECTED']
+  requested_by_pid varchar(50) [not null]
+  approved_by_pid varchar(50) [note: 'Admin who approved/rejected the request']
+  approved_at timestamp
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+// =============================================
+// Feature 2: Student & Volunteer Profiles
+// =============================================
+
+Table villages {
+  id bigint [primary key]
+  name varchar(100) [not null]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+Table groups {
+  id bigint [primary key]
+  name varchar(50) [not null]
+  description text
+  is_active boolean [default: true]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+Table students {
+  pid varchar(50) [primary key]
+  first_name varchar(50) [not null]
+  last_name varchar(50) [not null]
+  year_of_birth int
+  gender varchar(10) [not null, note: 'MALE, FEMALE, OTHER']
+  profile_pic varchar(255)
+  school_class varchar(20)
+  village_id bigint [not null]
+  group_id bigint [not null]
+  primary_contact_no varchar(20)
+  secondary_contact_no varchar(20)
+  fathers_name varchar(100)
+  mothers_name varchar(100)
+  is_active boolean [default: true]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+Table student_group_history {
+  id bigint [primary key]
+  student_pid varchar(50) [not null]
+  group_id bigint [not null]
+  assigned_by_pid varchar(50) [not null]
+  assigned_at timestamp [not null]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+Table volunteers {
+  pid varchar(50) [primary key]
+  roll_number varchar(20) [unique]
+  first_name varchar(50) [not null]
+  last_name varchar(50) [not null]
+  gender varchar(10) [not null, note: 'MALE, FEMALE, OTHER']
+  alternate_email varchar(255)
+  batch varchar(20)
+  programme varchar(100)
+  street_address_1 text
+  street_address_2 text
+  pincode varchar(10)
+  city varchar(100)
+  state varchar(100)
+  date_of_birth date [not null]
+  contact_number varchar(20)
+  college varchar(100)
+  branch varchar(100)
+  year_of_study int
+  is_active boolean [default: true]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+Table face_data {
+  id bigint [primary key]
+  pid varchar(50) [not null, note: 'Can be student or volunteer PID']
+  name varchar(255)
+  width int
+  height int
+  face_width int
+  face_height int
+  top int
+  left int
+  right int
+  bottom int
+  landmarks text [note: 'Serialized list of FaceLandmark objects']
+  smiling_probability float
+  left_eye_open_probability float
+  right_eye_open_probability float
+  timestamp varchar(50)
+  time bigint
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+// =============================================
+// Feature 3: Attendance Management
+// =============================================
+
+Table student_attendance {
+  id bigint [primary key]
+  date date [not null]
+  student_pid varchar(50) [not null]
+  marked_by_pid varchar(50) [not null]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+Table volunteer_attendance {
+  id bigint [primary key]
+  date date [not null]
+  volunteer_pid varchar(50) [not null]
+  role varchar(50) [not null, note: 'MAIN, SUPPORTING']
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+// =============================================
+// Feature 4: Syllabus Management
+// =============================================
+
+Table subjects {
+  id bigint [primary key]
+  name varchar(50) [not null]
+  description text
+  is_active boolean [default: true]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+Table topics {
+  id bigint [primary key]
+  subject_id bigint [not null]
+  name varchar(100) [not null]
+  description text
+  class integer [not null, note: 'Class level from 1 to 12']
+  is_active boolean [default: true]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+Table subtopics {
+  id bigint [primary key]
+  topic_id bigint [not null]
+  name varchar(100) [not null]
+  description text
+  is_active boolean [default: true]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+Table topic_resources {
+  id bigint [primary key]
+  topic_id bigint [not null]
+  volunteer_pid varchar(50) [not null]
+  resource_content text [not null, note: 'Can be plain text or a link']
+  resource_type varchar(20) [not null, note: 'TEXT or LINK']
+  is_active boolean [default: true]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+// =============================================
+// Feature 5: Volunteer Scheduling
+// =============================================
+
+Table volunteer_schedules {
+  id bigint [primary key]
+  volunteer_pid varchar(50) [not null]
+  day_of_week varchar(10) [not null, note: 'MONDAY, TUESDAY, etc.']
+  group_id bigint [not null]
+  subject_id bigint [not null]
+  is_active boolean [default: true]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+Table schedule_requests {
+  id bigint [primary key]
+  volunteer_pid varchar(50) [not null]
+  request_type varchar(20) [not null, note: 'ADD, MODIFY, DELETE']
+  day_of_week varchar(10) [not null]
+  group_id bigint [not null]
+  subject_id bigint [not null]
+  status varchar(20) [not null, note: 'PENDING, APPROVED, REJECTED']
+  reviewed_by_pid varchar(50) [note: 'Admin who reviewed the request']
+  reviewed_at timestamp
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+// =============================================
+// Feature 6: Classwork & Homework
+// =============================================
+
+Table class_sessions {
+  id bigint [primary key]
+  date date [not null]
+  start_time time [not null]
+  end_time time [not null]
+  status varchar(20) [not null, note: 'SCHEDULED, COMPLETED, CANCELLED, POSTPONED']
+  main_volunteer_pid varchar(50) [not null]
+  is_active boolean [default: true]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+Table session_topics {
+  id bigint [primary key]
+  session_id bigint [not null]
+  topic_id bigint [not null]
+  subtopic_id bigint [note: 'Optional']
+  created_at timestamp [not null]
+}
+
+Table homework {
+  id bigint [primary key]
+  session_id bigint [not null]
+  student_pid varchar(50) [not null]
+  description text [not null]
+  due_date date [not null]
+  status varchar(20) [not null, note: 'PENDING, COMPLETED, NOT_DONE']
+  submission_date timestamp
+  score decimal(3,2) [note: 'If homework is graded']
+  feedback text
+  checked_by_pid varchar(50)
+  checked_at timestamp
+  is_active boolean [default: true]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+Table session_images {
+  id bigint [primary key]
+  session_id bigint [not null]
+  image_url varchar(255) [not null]
+  image_type varchar(20) [not null, note: 'HOMEWORK or CLASSWORK']
+  display_order integer [not null, default: 0]
+  created_at timestamp [not null]
+  expires_at timestamp [not null, note: 'When the image should be deleted']
+}
+
+Table classwork {
+  id bigint [primary key]
+  session_id bigint [not null]
+  student_pid varchar(50) [not null]
+  description text [not null]
+  resources text[] [note: 'Array of resource URLs']
+  created_at timestamp [not null]
+}
+
+// =============================================
+// Feature 7: Student Progress & Remarks
+// =============================================
+
+Table student_proficiency {
+  id bigint [primary key]
+  student_pid varchar(50) [not null]
+  topic_id bigint [not null]
+  proficiency_score decimal(3,2) [not null]
+  last_updated_by_pid varchar(50) [not null]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+Table remarks {
+  id bigint [primary key]
+  student_pid varchar(50) [not null]
+  topic_id bigint [not null]
+  remark_type varchar(20) [not null, note: 'ACADEMIC, BEHAVIORAL, etc.']
+  content text [not null]
+  score decimal(3,2) [note: 'For academic remarks']
+  weight decimal(3,2) [not null, note: 'Reliability weight of this remark']
+  created_by_pid varchar(50) [not null]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+Table remark_votes {
+  remark_id bigint [not null]
+  volunteer_pid varchar(50) [not null]
+  vote_type varchar(20) [not null, note: 'UPVOTE, DOWNVOTE']
+  created_at timestamp [not null]
+}
+
+// =============================================
+// Feature 8: Volunteer Ranking & Activities
+// =============================================
+
+Table activity_types {
+  id bigint [primary key]
+  name varchar(100) [not null]
+  description text
+  base_points integer [not null]
+  is_active boolean [default: true]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+Table volunteer_activities {
+  id bigint [primary key]
+  volunteer_pid varchar(50) [not null]
+  activity_type_id bigint [not null]
+  points integer [not null]
+  description text
+  session_id bigint [note: 'If activity is related to a session']
+  group_id bigint [note: 'If activity is related to a group']
+  student_pid varchar(50) [note: 'If activity is related to a student']
+  created_by_pid varchar(50) [not null, note: 'Admin who logged the activity']
+  created_at timestamp [not null]
+}
+
+// =============================================
+// Feature 9: Posts & Social Features
+// =============================================
+
+Table posts {
+  id bigint [primary key]
+  volunteer_pid varchar(50) [not null]
+  description text [not null]
+  category varchar(20) [note: 'STUDENT_ACHIEVEMENT, EVENT, GENERAL']
+  is_active boolean [default: true]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+Table post_images {
+  id bigint [primary key]
+  post_id bigint [not null]
+  image_url varchar(255) [not null]
+  display_order integer [not null, default: 0]
+  created_at timestamp [not null]
+}
+
+Table post_likes {
+  post_id bigint [not null]
+  volunteer_pid varchar(50) [not null]
+  created_at timestamp [not null]
+}
+
+// =============================================
+// References
+// =============================================
+
+// Feature 1: User Management & Role System References
+
+Ref: role_transitions.user_pid > users.pid
+Ref: role_transitions.from_role_id > roles.id
+Ref: role_transitions.to_role_id > roles.id
+Ref: role_transitions.requested_by_pid > users.pid
+Ref: role_transitions.approved_by_pid > users.pid
+Ref: roles.id < user_roles.role_id
+Ref: users.pid < user_roles.user_pid
+Ref: users.pid < user_roles.assigned_by_pid
+Ref: roles.id < role_permissions.role_id
+Ref: permissions.id < role_permissions.permission_id
+
+// Feature 2: Student & Volunteer Profiles References
+Ref: volunteers.pid > users.pid
+Ref: students.village_id > villages.id
+Ref: students.group_id > groups.id
+Ref: face_data.pid > students.pid
+Ref: face_data.pid > volunteers.pid
+Ref: student_group_history.student_pid > students.pid
+Ref: student_group_history.group_id > groups.id
+Ref: student_group_history.assigned_by_pid > volunteers.pid
+Ref: volunteer_requests.reviewed_by_pid > users.pid
+Ref: volunteer_requests.requested_by_pid > users.pid
+
+// Feature 3: Attendance Management References
+Ref: student_attendance.student_pid > students.pid
+Ref: student_attendance.marked_by_pid > volunteers.pid
+Ref: volunteer_attendance.volunteer_pid > volunteers.pid
+
+// Feature 4: Syllabus Management References
+
+Ref: topics.subject_id > subjects.id
+Ref: subtopics.topic_id > topics.id
+Ref: topic_resources.topic_id > topics.id
+Ref: topic_resources.volunteer_pid > volunteers.pid
+
+// Feature 5: Volunteer Scheduling References
+Ref: volunteer_schedules.volunteer_pid > volunteers.pid
+Ref: volunteer_schedules.group_id > groups.id
+Ref: volunteer_schedules.subject_id > subjects.id
+Ref: schedule_requests.volunteer_pid > volunteers.pid
+Ref: schedule_requests.group_id > groups.id
+Ref: schedule_requests.subject_id > subjects.id
+Ref: schedule_requests.reviewed_by_pid > volunteers.pid
+
+// Feature 6: Classwork & Homework References
+Ref: class_sessions.main_volunteer_pid > volunteers.pid
+Ref: session_topics.session_id > class_sessions.id
+Ref: session_topics.topic_id > topics.id
+Ref: session_topics.subtopic_id > subtopics.id
+Ref: homework.session_id > class_sessions.id
+Ref: homework.student_pid > students.pid
+Ref: homework.checked_by_pid > volunteers.pid
+Ref: session_images.session_id > class_sessions.id
+Ref: classwork.session_id > class_sessions.id
+Ref: classwork.student_pid > students.pid
+
+// Feature 7: Student Progress & Remarks References
+Ref: remarks.student_pid > students.pid
+Ref: remarks.topic_id > topics.id
+Ref: remarks.created_by_pid > volunteers.pid
+Ref: remark_votes.remark_id > remarks.id
+Ref: remark_votes.volunteer_pid > volunteers.pid
+
+// Feature 8: Volunteer Ranking & Activities References
+Ref: volunteer_activities.volunteer_pid > volunteers.pid
+Ref: volunteer_activities.activity_type_id > activity_types.id
+Ref: volunteer_activities.session_id > class_sessions.id
+Ref: student_proficiency.student_pid > students.pid
+Ref: student_proficiency.topic_id > topics.id
+Ref: student_proficiency.last_updated_by_pid > volunteers.pid
+
+// Feature 9: Posts & Social Features References
+Ref: posts.volunteer_pid > volunteers.pid
+Ref: post_images.post_id > posts.id
+Ref: post_likes.post_id > posts.id
+Ref: post_likes.volunteer_pid > volunteers.pid
+
+// =============================================
+// Indexes
+// =============================================
+
+// User Management & Role System Indexes
+Index idx_user_roles_user ON user_roles(user_pid);
+Index idx_user_roles_role ON user_roles(role_id);
+
+// Student & Volunteer Profiles Indexes
+Index idx_students_village ON students(village_id);
+Index idx_students_group ON students(group_id);
+Index idx_volunteers_roll_number ON volunteers(roll_number);
+Index idx_volunteer_requests_status ON volunteer_requests(status);
+Index idx_student_group_history_student ON student_group_history(student_pid);
+Index idx_student_group_history_group ON student_group_history(group_id);
+
+// Syllabus Management Indexes
+Index idx_topics_subject ON topics(subject_id);
+Index idx_topics_class ON topics(class);
+Index idx_subtopics_topic ON subtopics(topic_id);
+Index idx_topic_resources_topic ON topic_resources(topic_id);
+Index idx_topic_resources_volunteer ON topic_resources(volunteer_pid);
+
+// Group Management Indexes
+Index idx_groups_subject ON groups(subject_id);
+Index idx_student_group_history_student ON student_group_history(student_pid);
+Index idx_student_group_history_dates ON student_group_history(start_date, end_date);
+
+// Attendance Management Indexes
+Index idx_student_attendance_date ON student_attendance(date);
+Index idx_student_attendance_student ON student_attendance(student_pid);
+Index idx_volunteer_attendance_date ON volunteer_attendance(date);
+Index idx_volunteer_attendance_volunteer ON volunteer_attendance(volunteer_pid);
+
+// Classwork & Homework Indexes
+Index idx_class_sessions_date ON class_sessions(date);
+Index idx_session_topics_session ON session_topics(session_id);
+
+// Student Progress & Remarks Indexes
+Index idx_student_proficiency_student ON student_proficiency(student_pid);
+Index idx_student_proficiency_topic ON student_proficiency(topic_id);
+Index idx_remarks_student ON remarks(student_pid);
+Index idx_remarks_topic ON remarks(topic_id);
+Index idx_remark_votes_remark ON remark_votes(remark_id);
+Index idx_remark_votes_volunteer ON remark_votes(volunteer_pid);
+
+// Volunteer Ranking & Activities Indexes
+Index idx_volunteer_activities_volunteer ON volunteer_activities(volunteer_pid);
+Index idx_volunteer_activities_date ON volunteer_activities(created_at);
+Index idx_volunteer_activities_type ON volunteer_activities(activity_type_id);
+Index idx_volunteer_activities_points ON volunteer_activities(points);
+
+// Posts & Social Features Indexes
+Index idx_posts_volunteer ON posts(volunteer_pid);
+Index idx_posts_category ON posts(category);
+Index idx_posts_created ON posts(created_at);
+Index idx_post_images_post ON post_images(post_id);
+Index idx_post_likes_post ON post_likes(post_id);
+Index idx_post_likes_volunteer ON post_likes(volunteer_pid);
+
+// Volunteer Scheduling Indexes
+Index idx_volunteer_schedules_volunteer ON volunteer_schedules(volunteer_pid);
+Index idx_volunteer_schedules_group ON volunteer_schedules(group_id);
+Index idx_schedule_requests_status ON schedule_requests(status);
