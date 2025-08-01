@@ -14,7 +14,13 @@ class ImageKitService(
 ) {
     fun getAuthenticationParameters(): ImageKitResponse{
         val token = UUID.randomUUID().toString()
-        val expiry = (System.currentTimeMillis() / 1000)+(30*60)
+    private val privateKey: String,
+    @Value("\${imagekit.expiry-seconds:1800}")
+    private val expirySeconds: Long
+) {
+    fun getAuthenticationParameters(): ImageKitResponse{
+        val token = UUID.randomUUID().toString()
+        val expiry = (System.currentTimeMillis() / 1000) + expirySeconds
         return ImageKitResponse(
             token = token,
             expire = expiry,
