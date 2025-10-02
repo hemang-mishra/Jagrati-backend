@@ -2,8 +2,11 @@ package org.jagrati.jagratibackend.entities
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import org.jagrati.jagratibackend.entities.enums.Gender
 import java.time.LocalDate
 
 @Entity
@@ -23,7 +26,8 @@ data class Volunteer(
     val lastName: String,
 
     @Column(name = "gender", nullable = false, length = 10)
-    val gender: String,
+    @Enumerated(EnumType.STRING)
+    val gender: Gender,
 
     @Column(name = "alternate_email", length = 255)
     val alternateEmail: String? = null,

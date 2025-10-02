@@ -13,12 +13,14 @@ import VolunteerRequestActionResponse
 import org.jagrati.jagratibackend.config.InitialRoles
 import org.jagrati.jagratibackend.entities.User
 import org.jagrati.jagratibackend.entities.UserRole
+import org.jagrati.jagratibackend.entities.Volunteer
 import org.jagrati.jagratibackend.entities.VolunteerRequest
 import org.jagrati.jagratibackend.entities.enums.Gender
 import org.jagrati.jagratibackend.entities.enums.RequestStatus
 import org.jagrati.jagratibackend.repository.RoleRepository
 import org.jagrati.jagratibackend.repository.UserRepository
 import org.jagrati.jagratibackend.repository.UserRoleRepository
+import org.jagrati.jagratibackend.repository.VolunteerRepository
 import org.jagrati.jagratibackend.repository.VolunteerRequestRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -31,7 +33,8 @@ class VolunteerRequestService(
     private val volunteerRequestRepository: VolunteerRequestRepository,
     private val userRoleRepository: UserRoleRepository,
     private val roleRepository: RoleRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val volunteerRepository: VolunteerRepository
 ) {
     @Transactional
     fun createVolunteerRequest(request: CreateVolunteerRequest, userPid: String): VolunteerRequestActionResponse {
@@ -109,7 +112,28 @@ class VolunteerRequestService(
             ))
         }
 
-        //Save volunteer details in the table TODO
+        //Save volunteer details in the table
+        volunteerRepository.save(Volunteer(
+            pid = volunteerRequest.requestedBy.pid,
+            rollNumber = volunteerRequest.rollNumber,
+            firstName = volunteerRequest.firstName,
+            lastName = volunteerRequest.lastName,
+            gender = volunteerRequest.gender,
+            alternateEmail = volunteerRequest.alternateEmail,
+            batch = volunteerRequest.batch,
+            programme = volunteerRequest.programme,
+            streetAddress1 = volunteerRequest.streetAddress1,
+            streetAddress2 = volunteerRequest.streetAddress2,
+            pincode = volunteerRequest.pincode,
+            city = volunteerRequest.city,
+            state = volunteerRequest.state,
+            dateOfBirth = volunteerRequest.dateOfBirth,
+            contactNumber = volunteerRequest.contactNumber,
+            college = volunteerRequest.college,
+            branch = volunteerRequest.branch,
+            yearOfStudy = volunteerRequest.yearOfStudy,
+            isActive = true
+        ))
 
         return VolunteerRequestActionResponse(volunteerRequest.id, volunteerRequest.status.name, "Request approved")
     }
