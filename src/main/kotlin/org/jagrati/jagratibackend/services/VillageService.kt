@@ -28,7 +28,7 @@ class VillageService(
     }
 
     fun deleteVillage(request: LongRequest){
-        val village = villageRepository.findById(request.value).orElseThrow { IllegalArgumentException("Village") }
+        val village = villageRepository.findById(request.value).orElseThrow { IllegalArgumentException("Village not found") }
         villageRepository.save(village.copy(isActive = false))
     }
 
