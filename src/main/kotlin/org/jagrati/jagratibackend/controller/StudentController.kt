@@ -3,6 +3,7 @@ package org.jagrati.jagratibackend.controller
 import org.jagrati.jagratibackend.dto.StudentRequest
 import org.jagrati.jagratibackend.dto.UpdateStudentRequest
 import org.jagrati.jagratibackend.dto.StudentGroupHistoryResponse
+import org.jagrati.jagratibackend.dto.StudentResponse
 import org.jagrati.jagratibackend.services.StudentDetailsService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -57,5 +58,22 @@ class StudentController(
     @GetMapping("/{pid}/group-history")
     fun getGroupHistory(@PathVariable pid: String): ResponseEntity<List<StudentGroupHistoryResponse>> =
         ResponseEntity.ok(studentDetailsService.getGroupTransitions(pid))
-}
 
+    @Operation(summary = "List all students")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "List of students", content = [Content(schema = Schema(implementation = StudentResponse::class))])
+    ])
+    @RequiresPermission(AllPermissions.STUDENT_READ)
+    @GetMapping
+    fun getAllStudents(): ResponseEntity<List<StudentResponse>> =
+        ResponseEntity.ok(studentDetailsService.getAllStudents())
+
+    @Operation(summary = "Get student by pid")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Student details", content = [Content(schema = Schema(implementation = StudentResponse::class))])
+    ])
+    @RequiresPermission(AllPermissions.STUDENT_READ)
+    @GetMapping("/{pid}")
+    fun getStudentByPid(@PathVariable pid: String): ResponseEntity<StudentResponse> =
+        ResponseEntity.ok(studentDetailsService.getStudentByPid(pid))
+}

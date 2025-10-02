@@ -52,5 +52,12 @@ class FaceDataController(private val faceDataService: FaceDataService) {
     @GetMapping("/volunteers")
     fun getAllVolunteers(): ResponseEntity<List<VolunteerWithFaceDataResponse>> =
         ResponseEntity.ok(faceDataService.getAllVolunteersWithFaceData())
-}
 
+    @PostMapping("/me")
+    fun addForMe(@RequestBody request: UpdateFaceDataRequest): ResponseEntity<FaceDataResponse> =
+        ResponseEntity.ok(faceDataService.addFaceDataForCurrentUser(request))
+
+    @GetMapping("/me")
+    fun getMyFaceData(): ResponseEntity<FaceDataResponse> =
+        ResponseEntity.ok(faceDataService.getMyFaceData())
+}

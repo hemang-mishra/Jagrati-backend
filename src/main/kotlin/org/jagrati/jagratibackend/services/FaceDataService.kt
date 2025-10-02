@@ -5,6 +5,7 @@ import org.jagrati.jagratibackend.entities.FaceData
 import org.jagrati.jagratibackend.repository.FaceDataRepository
 import org.jagrati.jagratibackend.repository.StudentRepository
 import org.jagrati.jagratibackend.repository.VolunteerRepository
+import org.jagrati.jagratibackend.utils.SecurityUtils
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -144,6 +145,37 @@ class FaceDataService(
         }
     }
 
+    @Transactional
+    fun addFaceDataForCurrentUser(request: UpdateFaceDataRequest): FaceDataResponse {
+        val currentUser = SecurityUtils.getCurrentUser() ?: throw IllegalArgumentException("No current user")
+        val pid = currentUser.pid
+        faceDataRepository.deleteByPid(pid)
+        val saved = faceDataRepository.save(
+            FaceData(
+                pid = pid,
+                name = request.name,
+                faceLink = request.faceLink,
+                frameLink = request.frameLink,
+                imageLink = request.imageLink,
+                width = request.width,
+                height = request.height,
+                faceWidth = request.faceWidth,
+                faceHeight = request.faceHeight,
+                top = request.top,
+                left = request.left,
+                right = request.right,
+                bottom = request.bottom,
+                landmarks = request.landmarks,
+                smilingProbability = request.smilingProbability,
+                leftEyeOpenProbability = request.leftEyeOpenProbability,
+                rightEyeOpenProbability = request.rightEyeOpenProbability,
+                timestamp = request.timestamp,
+                time = request.time
+            )
+        )
+        return saved.toResponse()
+    }
+
     private fun FaceData.toResponse(): FaceDataResponse = FaceDataResponse(
         id = id,
         pid = pid,
@@ -167,4 +199,3 @@ class FaceDataService(
         time = time
     )
 }
-

@@ -3,6 +3,7 @@ package org.jagrati.jagratibackend.services
 import org.jagrati.jagratibackend.dto.StudentRequest
 import org.jagrati.jagratibackend.dto.UpdateStudentRequest
 import org.jagrati.jagratibackend.dto.StudentGroupHistoryResponse
+import org.jagrati.jagratibackend.dto.StudentResponse
 import org.jagrati.jagratibackend.entities.Student
 import org.jagrati.jagratibackend.entities.StudentGroupHistory
 import org.jagrati.jagratibackend.entities.enums.Gender
@@ -12,9 +13,8 @@ import org.jagrati.jagratibackend.repository.StudentRepository
 import org.jagrati.jagratibackend.repository.VillageRepository
 import org.jagrati.jagratibackend.utils.SecurityUtils
 import org.springframework.stereotype.Service
-import java.time.format.DateTimeFormatter
 import java.time.LocalDateTime
-import java.util.logging.Logger
+import java.time.format.DateTimeFormatter
 
 @Service
 class StudentDetailsService(
@@ -27,7 +27,6 @@ class StudentDetailsService(
         val village = villageRepository.findById(details.villageId).orElseThrow { IllegalArgumentException("Village not found") }
         val group = groupRepository.findById(details.groupId).orElseThrow { IllegalArgumentException("Group not found") }
         val currentUser = SecurityUtils.getCurrentUser() ?: throw IllegalArgumentException("No current user")
-
         studentRepository.save(
             Student(
                 pid = details.pid,
@@ -47,8 +46,6 @@ class StudentDetailsService(
                 registeredBy = currentUser,
             )
         )
-
-        // initial group assignment history
         studentGroupHistoryRepository.save(
             StudentGroupHistory(
                 student = studentRepository.findById(details.pid).orElseThrow(),
@@ -64,7 +61,6 @@ class StudentDetailsService(
         val existingGroupId = existing.group.id
         val newVillage = details.villageId?.let { villageRepository.findById(it).orElseThrow { IllegalArgumentException("Village not found") } } ?: existing.village
         val newGroup = details.groupId?.let { groupRepository.findById(it).orElseThrow { IllegalArgumentException("Group not found") } } ?: existing.group
-
         val updated = existing.copy(
             firstName = details.firstName ?: existing.firstName,
             lastName = details.lastName ?: existing.lastName,
@@ -80,9 +76,7 @@ class StudentDetailsService(
             mothersName = details.mothersName ?: existing.mothersName,
             isActive = details.isActive ?: existing.isActive,
         )
-
         studentRepository.save(updated)
-
         if (existingGroupId != newGroup.id) {
             val currentUser = SecurityUtils.getCurrentUser() ?: throw IllegalArgumentException("No current user")
             studentGroupHistoryRepository.save(
@@ -112,5 +106,49 @@ class StudentDetailsService(
             )
         }
     }
-}
 
+    fun getAllStudents(): List<StudentResponse> {
+        return studentRepository.findAll().map { s ->
+            StudentResponse(
+                pid = s.pid,
+                firstName = s.firstName,
+                lastName = s.lastName,
+                yearOfBirth = s.yearOfBirth,
+                gender = s.gender,
+                profilePic = s.profilePic,
+                schoolClass = s.schoolClass,
+                villageId = s.village.id,
+                villageName = s.village.name,
+                groupId = s.group.id,
+                groupName = s.group.name,
+                primaryContactNo = s.primaryContactNo,
+                secondaryContactNo = s.secondaryContactNo,
+                fathersName = s.fathersName,
+                mothersName = s.mothersName,
+                isActive = s.isActive
+            )
+        }
+    }
+
+    fun getStudentByPid(pid: String): StudentResponse {
+        val s = studentRepository.findById(pid).orElseThrow { IllegalArgumentException("Student not found") }
+        return StudentResponse(
+            pid = s.pid,
+            firstName = s.firstName,
+            lastName = s.lastName,
+            yearOfBirth = s.yearOfBirth,
+            gender = s.gender,
+            profilePic = s.profilePic,
+            schoolClass = s.schoolClass,
+            villageId = s.village.id,
+            villageName = s.village.name,
+            groupId = s.group.id,
+            groupName = s.group.name,
+            primaryContactNo = s.primaryContactNo,
+            secondaryContactNo = s.secondaryContactNo,
+            fathersName = s.fathersName,
+            mothersName = s.mothersName,
+            isActive = s.isActive
+        )
+    }
+}
