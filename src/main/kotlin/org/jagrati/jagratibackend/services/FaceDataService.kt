@@ -176,6 +176,12 @@ class FaceDataService(
         return saved.toResponse()
     }
 
+    @Transactional(readOnly = true)
+    fun getMyFaceData(): FaceDataResponse {
+        val currentUser = SecurityUtils.getCurrentUser() ?: throw IllegalArgumentException("No current user")
+        return faceDataRepository.findByPid(currentUser.pid)?.toResponse() ?: throw IllegalArgumentException("Face data not found")
+    }
+
     private fun FaceData.toResponse(): FaceDataResponse = FaceDataResponse(
         id = id,
         pid = pid,

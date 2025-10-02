@@ -1,6 +1,7 @@
 package org.jagrati.jagratibackend.services
 
 import org.jagrati.jagratibackend.dto.VolunteerResponse
+import org.jagrati.jagratibackend.entities.Volunteer
 import org.jagrati.jagratibackend.repository.VolunteerRepository
 import org.springframework.stereotype.Service
 
@@ -16,7 +17,7 @@ class VolunteerService(
         val v = volunteerRepository.findById(pid).orElseThrow { IllegalArgumentException("Volunteer not found") }
         return mapToVolunteerResponse(v)
     }
-    private fun mapToVolunteerResponse(v: org.jagrati.jagratibackend.model.Volunteer): VolunteerResponse {
+    private fun mapToVolunteerResponse(v: Volunteer): VolunteerResponse {
         return VolunteerResponse(
             pid = v.pid,
             rollNumber = v.rollNumber,
