@@ -108,30 +108,15 @@ class StudentDetailsService(
     }
 
     fun getAllStudents(): List<StudentResponse> {
-        return studentRepository.findAll().map { s ->
-            StudentResponse(
-                pid = s.pid,
-                firstName = s.firstName,
-                lastName = s.lastName,
-                yearOfBirth = s.yearOfBirth,
-                gender = s.gender,
-                profilePic = s.profilePic,
-                schoolClass = s.schoolClass,
-                villageId = s.village.id,
-                villageName = s.village.name,
-                groupId = s.group.id,
-                groupName = s.group.name,
-                primaryContactNo = s.primaryContactNo,
-                secondaryContactNo = s.secondaryContactNo,
-                fathersName = s.fathersName,
-                mothersName = s.mothersName,
-                isActive = s.isActive
-            )
-        }
+        return studentRepository.findAll().map { s -> studentToResponse(s) }
     }
 
     fun getStudentByPid(pid: String): StudentResponse {
         val s = studentRepository.findById(pid).orElseThrow { IllegalArgumentException("Student not found") }
+        return studentToResponse(s)
+    }
+
+    private fun studentToResponse(s: Student): StudentResponse {
         return StudentResponse(
             pid = s.pid,
             firstName = s.firstName,
