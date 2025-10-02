@@ -52,7 +52,7 @@ class GroupController(
     @ApiResponses(value = [
         ApiResponse(responseCode = "200", description = "List of active groups", content = [Content(schema = Schema(implementation = LongStringResponse::class))])
     ])
-    @GetMapping("/getAll")
+    @GetMapping
     fun getAllActiveGroups(): ResponseEntity<List<LongStringResponse>> {
         return ResponseEntity.ok(service.getAllActiveGroups())
     }
