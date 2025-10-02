@@ -10,9 +10,10 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import java.time.LocalDate
+import jakarta.persistence.UniqueConstraint
 
 @Entity
-@Table(name = "volunteer_attendance")
+@Table(name = "volunteer_attendance", uniqueConstraints = [UniqueConstraint(columnNames = ["volunteer_pid", "attendance_date"])])
 data class VolunteerAttendance(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
