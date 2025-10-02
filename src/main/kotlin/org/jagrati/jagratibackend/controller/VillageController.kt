@@ -53,7 +53,7 @@ class VillageController(
         ApiResponse(responseCode = "200", description = "List of active villages", content = [Content(schema = Schema(implementation = LongStringResponse::class))])
     ])
     @RequiresPermission(AllPermissions.VILLAGE_MANAGE)
-    @GetMapping("/getAll")
+    @GetMapping
     fun getAllActiveVillages(): ResponseEntity<List<LongStringResponse>> {
         return ResponseEntity.ok(service.getAllActiveVillages())
     }
