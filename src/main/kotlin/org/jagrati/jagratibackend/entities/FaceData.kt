@@ -6,16 +6,17 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import jakarta.persistence.UniqueConstraint
 
 @Entity
-@Table(name = "face_data")
+@Table(name = "face_data", uniqueConstraints = [UniqueConstraint(columnNames = ["pid"])])
 data class FaceData(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     val id: Long = 0,
 
-    @Column(name = "pid", nullable = false, length = 50)
+    @Column(name = "pid", nullable = false, length = 50, unique = true)
     val pid: String,
 
     @Column(name = "name", length = 255)
