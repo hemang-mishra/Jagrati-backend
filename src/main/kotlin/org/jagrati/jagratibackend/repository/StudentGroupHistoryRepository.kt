@@ -4,4 +4,5 @@ import org.jagrati.jagratibackend.entities.StudentGroupHistory
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface StudentGroupHistoryRepository: JpaRepository<StudentGroupHistory, Long> {
+    fun findByStudentPidOrderByAssignedAtDesc(studentPid: String): List<StudentGroupHistory>
 }

@@ -45,10 +45,10 @@ data class FaceData(
     @Column(name = "top")
     val top: Int? = null,
 
-    @Column(name = "left")
+    @Column(name = "left_int")
     val left: Int? = null,
 
-    @Column(name = "right")
+    @Column(name = "right_int")
     val right: Int? = null,
 
     @Column(name = "bottom")

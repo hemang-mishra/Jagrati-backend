@@ -4,7 +4,7 @@ import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.jagrati.jagratibackend.entities.User
 import org.jagrati.jagratibackend.services.UserService
-import org.jagrati.jagratibackend.util.PidGenerator
+import org.jagrati.jagratibackend.utils.PidGenerator
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.Authentication
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken

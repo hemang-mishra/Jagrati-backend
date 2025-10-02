@@ -40,30 +40,4 @@ class VillageService(
             )
         }
     }
-
-
-    fun registerNewStudent(details: StudentRequest){
-        val village = villageRepository.findById(details.villageId).orElseThrow { IllegalArgumentException("Village not found") }
-        val group = groupRepository.findById(details.groupId).orElseThrow { IllegalArgumentException("Group not found") }
-        val currentUser = SecurityUtils.getCurrentUser() ?: throw IllegalArgumentException("No current user")
-        studentRepository.save(
-            Student(
-                pid = details.pid,
-                firstName = details.firstName,
-                lastName = details.lastName,
-                yearOfBirth = details.yearOfBirth,
-                gender = Gender.valueOf(details.gender),
-                profilePic = details.profilePic,
-                schoolClass = details.schoolClass,
-                village = village,
-                group = group,
-                primaryContactNo = details.primaryContactNo,
-                secondaryContactNo = details.secondaryContactNo,
-                fathersName = details.fathersName,
-                mothersName = details.mothersName,
-                isActive = true,
-                registeredBy = currentUser,
-            )
-        )
-    }
 }
