@@ -16,5 +16,8 @@ data class Village(
     val id: Long = 0,
 
     @Column(name = "name", nullable = false, length = 100)
-    val name: String
+    val name: String,
+
+    @Column(name = "is_active", nullable = false)
+    val isActive: Boolean = true,
 ) : BaseEntity()

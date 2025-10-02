@@ -27,7 +27,7 @@ data class StudentAttendance(
     val studentId: Student,
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @Column(name = "marked_by_user", nullable = false)
+    @JoinColumn(name = "marked_by_user", nullable = false)
     val markedByVolunteer: User,
 
     @Column(name = "remarks", nullable = true)

@@ -168,7 +168,7 @@ class DataInitializationConfig(
         // SUPER_ADMIN gets all permissions
         val superAdminRole = roles[InitialRoles.SUPER_ADMIN.roleString]
         if (superAdminRole != null) {
-            AllPermissions.values().forEach { allPermission ->
+            AllPermissions.entries.forEach { allPermission ->
                 val permission = permissions[allPermission.name]
                 if (permission != null) {
                     val existingRolePermission = rolePermissionRepository.findByRoleAndPermission(superAdminRole, permission)
@@ -229,9 +229,6 @@ class DataInitializationConfig(
 
                 // Syllabus permissions
                 AllPermissions.SYLLABUS_READ,
-
-                // Group permissions
-                AllPermissions.GROUP_READ
             )
 
             volunteerPermissions.forEach { allPermission ->
