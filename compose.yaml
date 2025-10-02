@@ -6,4 +6,4 @@ services:
       - 'POSTGRES_PASSWORD=jagratisuperadmin'
       - 'POSTGRES_USER=superadmin'
     ports:
-      - '5433:5432'
+      - '5437:5432'

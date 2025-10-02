@@ -15,8 +15,8 @@ import org.jagrati.jagratibackend.repository.RefreshTokenRepository
 import org.jagrati.jagratibackend.repository.UserRoleRepository
 import org.jagrati.jagratibackend.services.EmailService
 import org.jagrati.jagratibackend.services.UserService
-import org.jagrati.jagratibackend.util.PidGenerator
-import org.jagrati.jagratibackend.util.PidGenerator.generatePid
+import org.jagrati.jagratibackend.utils.PidGenerator
+import org.jagrati.jagratibackend.utils.PidGenerator.generatePid
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.authentication.BadCredentialsException
@@ -259,7 +259,7 @@ class AuthService(
 
         if (user == null) {
             // Create new user if not exists
-            val pid = PidGenerator.generatePid(name = firstName)
+            val pid = generatePid(name = firstName)
             val password = UUID.randomUUID().toString()
             user = User(
                 pid = pid,
