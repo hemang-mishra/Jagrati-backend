@@ -1,7 +1,7 @@
 package org.jagrati.jagratibackend.controller
 
 
-import org.jagrati.jagratibackend.security.AuthService
+import org.jagrati.jagratibackend.services.AuthService
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping

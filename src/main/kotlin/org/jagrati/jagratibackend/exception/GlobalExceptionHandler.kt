@@ -5,9 +5,10 @@ import org.springframework.http.ResponseEntity
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
+import org.springframework.web.bind.annotation.RestControllerAdvice
 import java.time.LocalDateTime
 
-@ControllerAdvice
+@RestControllerAdvice
 class GlobalExceptionHandler {
 
     data class ErrorResponse(
@@ -54,19 +55,23 @@ class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalStateException::class)
     fun handleIllegalStateException(ex: IllegalStateException): ResponseEntity<ErrorResponse> {
+        val status = if(ex.message?.contains("already exists") == true){
+            HttpStatus.CONFLICT
+        }else
+            HttpStatus.BAD_REQUEST
         val errorResponse = ErrorResponse(
             status = HttpStatus.BAD_REQUEST.value(),
-            error = "Bad Request",
+            error = status.reasonPhrase,
             message = ex.message ?: "Operation cannot be performed",
             path = null
         )
-        return ResponseEntity(errorResponse, HttpStatus.BAD_REQUEST)
+        return ResponseEntity(errorResponse, status)
     }
 
     @ExceptionHandler(IllegalArgumentException::class)
     fun handleIllegalArgumentException(ex: IllegalArgumentException): ResponseEntity<ErrorResponse> {
         // Special handling for "User not found" error
-        if (ex.message?.contains("User not found") == true) {
+        if (ex.message?.contains("not found") == true) {
             val errorResponse = ErrorResponse(
                 status = HttpStatus.NOT_FOUND.value(),
                 error = "Not Found",

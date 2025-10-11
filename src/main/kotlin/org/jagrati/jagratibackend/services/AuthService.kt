@@ -1,4 +1,4 @@
-package org.jagrati.jagratibackend.security
+package org.jagrati.jagratibackend.services
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier
@@ -12,15 +12,12 @@ import org.jagrati.jagratibackend.entities.User
 import org.jagrati.jagratibackend.repository.EmailVerificationTokenRepository
 import org.jagrati.jagratibackend.repository.PasswordResetTokenRepository
 import org.jagrati.jagratibackend.repository.RefreshTokenRepository
-import org.jagrati.jagratibackend.repository.UserRoleRepository
-import org.jagrati.jagratibackend.services.EmailService
-import org.jagrati.jagratibackend.services.UserService
+import org.jagrati.jagratibackend.security.HashEncoder
+import org.jagrati.jagratibackend.security.JWTService
 import org.jagrati.jagratibackend.utils.PidGenerator
-import org.jagrati.jagratibackend.utils.PidGenerator.generatePid
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.authentication.BadCredentialsException
-import org.springframework.security.oauth2.core.user.OAuth2User
 import org.springframework.stereotype.Service
 import java.lang.IllegalArgumentException
 import java.security.MessageDigest
@@ -28,7 +25,6 @@ import java.time.Instant
 import java.util.Base64
 import java.util.Collections
 import java.util.UUID
-import kotlin.toString
 
 @Service
 class AuthService(
@@ -39,7 +35,7 @@ class AuthService(
     private val emailVerificationTokenRepository: EmailVerificationTokenRepository,
     private val emailService: EmailService,
     private val passwordResetTokenRepository: PasswordResetTokenRepository,
-    @Value("\${spring.security.oauth2.client.registration.google.client-id}")
+    @param:Value("\${spring.security.oauth2.client.registration.google.client-id}")
     private val googleClientId: String
 ) {
     private val logger = LoggerFactory.getLogger(AuthService::class.java)
@@ -55,7 +51,7 @@ class AuthService(
             throw IllegalStateException("User with this email already exists")
         }
 
-        val pid = generatePid(name = firstName)
+        val pid = PidGenerator.generatePid(name = firstName)
         // Check if user does not exist with this pid (it won't happen in real world scenarios)
         val user = userService.getUserById(pid)
         if (user != null) {
@@ -237,7 +233,7 @@ class AuthService(
             .setAudience(Collections.singleton(googleClientId))
             .build()
 
-        val idToken = verifier.verify(idTokenString) ?: throw BadCredentialsException("Google idToken not found.")
+        val idToken = verifier.verify(idTokenString) ?: throw BadCredentialsException("Google idToken couldn't be verified.")
 
         val payload: GoogleIdToken.Payload = idToken.payload
         val user = processOAuth2User(
@@ -259,7 +255,7 @@ class AuthService(
 
         if (user == null) {
             // Create new user if not exists
-            val pid = generatePid(name = firstName)
+            val pid = PidGenerator.generatePid(name = firstName)
             val password = UUID.randomUUID().toString()
             user = User(
                 pid = pid,
