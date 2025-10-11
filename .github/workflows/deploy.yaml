@@ -1,0 +1,61 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build with Gradle
+        run: ./gradlew clean build -x test
+
+      - name: Build Docker Image
+        run: docker build -t jagrati_app:latest .
+
+      - name: Save docker image as tar
+        run: docker save jagrati_app:latest -o jagrati_app.tar
+
+      - name: Copy image to server via SSH
+        uses: appleboy/scp-action@v1.0.0
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "jagrati_app.tar"
+          target: "/home/${{ secrets.USERNAME}}/jagrati_app.tar"
+
+      - name: Deploy on Server
+        uses: appleboy/ssh-action@v1.1.0
+        with:
+          host: ${{ secrets.HOST }}GMAIL_PASS
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            docker load -i ~/jagrati_app.tar
+            docker stop jagrati_app || true
+            docker rm jagrati_app || true
+            docekr run -d \
+            --name jagrati_app \
+            -p 8080:8080 \
+            -e JWT_SECRET_BASE_64=${{secrets.JWT_SECRET_BASE_64}}\
+            -e IMAGE_KIT_PRIVATE_KEY=${{secrets.IMAGE_KIT_PRIVATE_KEY}}\
+            -e OAUTH2_CLIENT_ID=${{secrets.OAUTH2_CLIENT_ID}}\
+            -e OAUTH2_SECRET=${{secrets.OAUTH2_SECRET}}\
+            -e GMAIL_PASS=${{secrets.GMAIL_PASS}}\
+            -e SPRING_DATASOURCE_URL=${{secrets.SPRING_DATASOURCE_URL}}\
+            -e SPRING_DATASOURCE_USERNAME=${{secrets.SPRING_DATASOURCE_USERNAME}}\
+            -e SPRING_DATASOURCE_PASSWORD=${{secrets.SPRING_DATASOURCE_PASSWORD}}\
+            jagrati_app:latest
