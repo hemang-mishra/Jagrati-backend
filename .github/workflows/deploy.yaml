@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - master
-  workflow_dispatch: 
+  workflow_dispatch:
 
 jobs:
   build:
@@ -29,7 +29,7 @@ jobs:
       - name: Save docker image as tar
         run: docker save jagrati_app:latest -o jagrati_app.tar
 
-      - name: Copy image to server via SSH
+      - name: Copy image to server via SCP
         uses: appleboy/scp-action@v1.0.0
         with:
           host: ${{ secrets.HOST }}
@@ -41,14 +41,14 @@ jobs:
       - name: Deploy on Server
         uses: appleboy/ssh-action@v1.1.0
         with:
-          host: ${{ secrets.HOST }}GMAIL_PASS
+          host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             docker load -i ~/jagrati_app.tar
             docker stop jagrati_app || true
             docker rm jagrati_app || true
-            docekr run -d \
+            doceker run -d \
             --name jagrati_app \
             -p 8080:8080 \
             -e JWT_SECRET_BASE_64=${{secrets.JWT_SECRET_BASE_64}}\
