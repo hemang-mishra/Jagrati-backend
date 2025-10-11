@@ -1,4 +1,10 @@
 import jakarta.validation.constraints.NotBlank
+import org.jagrati.jagratibackend.dto.FaceDataResponse
+import org.jagrati.jagratibackend.dto.GroupDTO
+import org.jagrati.jagratibackend.dto.StudentResponse
+import org.jagrati.jagratibackend.dto.VillageDTO
+import org.jagrati.jagratibackend.dto.VolunteerResponse
+import org.jagrati.jagratibackend.entities.Village
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -61,7 +67,6 @@ data class DetailedVolunteerRequestListResponse(
 )
 
 
-// --- Bulk Permissions with Roles ---
 data class PermissionWithRolesResponse(
     val id: Long,
     val name: String,
@@ -74,7 +79,7 @@ data class PermissionWithRolesListResponse(
     val permissions: List<PermissionWithRolesResponse>
 )
 
-// --- Bulk Users with Roles ---
+
 data class UserWithRolesResponse(
     val pid: String,
     val firstName: String,
@@ -149,5 +154,12 @@ data class CreateVolunteerRequest(
 data class UserDetailsWithRolesAndPermissions(
     val userDetails: UserSummaryDTO,
     val roles: List<RoleSummaryResponse>,
-    val permissions: PermissionListResponse
+    val permissions: PermissionListResponse,
+    val villages: List<VillageDTO> = emptyList(),
+    val groups: List<GroupDTO> = emptyList(),
+    val students: List<StudentResponse> = emptyList(),
+    val volunteers: List<VolunteerResponse> = emptyList(),
+    val volunteerProfile: VolunteerResponse? = null,
+    val faceData: List<FaceDataResponse> = emptyList(),
+    val isVolunteer: Boolean = false
 )

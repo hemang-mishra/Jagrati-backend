@@ -3,6 +3,7 @@ package org.jagrati.jagratibackend.security
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.jagrati.jagratibackend.entities.User
+import org.jagrati.jagratibackend.services.AuthService
 import org.jagrati.jagratibackend.services.UserService
 import org.jagrati.jagratibackend.utils.PidGenerator
 import org.springframework.beans.factory.annotation.Value
@@ -19,7 +20,7 @@ class OAuth2SuccessHandler(
     private val authService: AuthService,
     @Value("\${app.base-url}") private val baseUrl: String,
 
-): SimpleUrlAuthenticationSuccessHandler() {
+    ): SimpleUrlAuthenticationSuccessHandler() {
 
     override fun onAuthenticationSuccess(
         request: HttpServletRequest?,

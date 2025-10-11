@@ -7,7 +7,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.jagrati.jagratibackend.dto.*
-import org.jagrati.jagratibackend.security.AuthService
+import org.jagrati.jagratibackend.services.AuthService
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity

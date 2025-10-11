@@ -118,9 +118,11 @@ class UserController(
             )
         ]
     )
-    @GetMapping("/me")
-    fun getAllUsersWithRoles(): ResponseEntity<UserDetailsWithRolesAndPermissions> {
+    @GetMapping("/me/{timeMillis}")
+    fun getAllUsersWithRoles(
+        @PathVariable timeMillis: Long,
+    ): ResponseEntity<UserDetailsWithRolesAndPermissions> {
         val currentUser = SecurityUtils.getCurrentUser() ?: throw IllegalArgumentException("User not found")
-        return ResponseEntity.ok(userRoleService.fetchDetailsOfUser(currentUser))
+        return ResponseEntity.ok(userRoleService.fetchDetailsOfUser(currentUser, timeMillis))
     }
 }
