@@ -10,22 +10,38 @@ import UserRoleAssignmentResponse
 import UserSummaryDTO
 import UserWithRolesListResponse
 import UserWithRolesResponse
+import org.jagrati.jagratibackend.dto.toDTO
+import org.jagrati.jagratibackend.dto.toResponse
 import org.jagrati.jagratibackend.entities.User
 import org.jagrati.jagratibackend.entities.UserRole
+import org.jagrati.jagratibackend.repository.FaceDataRepository
+import org.jagrati.jagratibackend.repository.GroupRepository
 import org.jagrati.jagratibackend.repository.RolePermissionRepository
 import org.jagrati.jagratibackend.repository.RoleRepository
+import org.jagrati.jagratibackend.repository.StudentRepository
 import org.jagrati.jagratibackend.repository.UserRepository
 import org.jagrati.jagratibackend.repository.UserRoleRepository
+import org.jagrati.jagratibackend.repository.VillageRepository
+import org.jagrati.jagratibackend.repository.VolunteerRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
 import kotlin.collections.map
+import kotlin.jvm.optionals.getOrNull
 
 @Service
 class UserRoleService(
     private val userRepository: UserRepository,
     private val roleRepository: RoleRepository,
     private val userRoleRepository: UserRoleRepository,
-    private val permissionRoleRepository: RolePermissionRepository
+    private val permissionRoleRepository: RolePermissionRepository,
+    private val villageRepository: VillageRepository,
+    private val groupRepository: GroupRepository,
+    private val studentRepository: StudentRepository,
+    private val volunteerRepository: VolunteerRepository,
+    private val faceDataRepository: FaceDataRepository
 ) {
     @Transactional
     fun assignRoleToUser(request: AssignRoleToUserRequest, assignedByPid: String): UserRoleAssignmentResponse {
@@ -70,7 +86,7 @@ class UserRoleService(
         return UserWithRolesListResponse(result)
     }
 
-    fun fetchDetailsOfUser(user: User): UserDetailsWithRolesAndPermissions {
+    fun fetchDetailsOfUser(user: User, timeMillis: Long): UserDetailsWithRolesAndPermissions {
         val roles = userRoleRepository.findByUser(user)
         val userPermissions = mutableListOf<PermissionResponse>()
         roles.forEach { userRole ->
@@ -86,7 +102,7 @@ class UserRoleService(
                 )
             }
         }
-        return UserDetailsWithRolesAndPermissions(
+        var dto = UserDetailsWithRolesAndPermissions(
             permissions = PermissionListResponse(userPermissions),
             userDetails = UserSummaryDTO(
                 pid = user.pid,
@@ -104,5 +120,24 @@ class UserRoleService(
                 )
             }
         )
+        if(volunteerRepository.existsById(user.pid)){
+            val updatedAfter = LocalDateTime.ofInstant(Instant.ofEpochMilli(timeMillis), ZoneId.systemDefault())
+            val volunteer = volunteerRepository.findById(user.pid).getOrNull()
+            val volunteers = volunteerRepository.findAllByUpdatedAtAfter(updatedAfter).map { it.toResponse() }
+            val students = studentRepository.findAllByUpdatedAtAfter(updatedAfter).map { it.toResponse() }
+            val villages = villageRepository.findAllByUpdatedAtAfter(updatedAfter).map { it.toDTO() }
+            val groups = groupRepository.findAllByUpdatedAtAfter(updatedAfter).map { it.toDTO() }
+            val faceData = faceDataRepository.findAllByUpdatedAtAfter(updatedAfter).map { it.toResponse() }
+            dto = dto.copy(
+                volunteers = volunteers,
+                students = students,
+                volunteerProfile = volunteer?.toResponse(),
+                villages = villages,
+                groups = groups,
+                faceData = faceData,
+                isVolunteer = true
+            )
+        }
+        return dto
     }
 }

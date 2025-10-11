@@ -1,5 +1,6 @@
 package org.jagrati.jagratibackend.dto
 
+import org.jagrati.jagratibackend.entities.FaceData
 import org.jagrati.jagratibackend.entities.enums.Gender
 
 data class AddFaceDataRequest(
@@ -111,3 +112,49 @@ data class VolunteerWithFaceDataResponse(
     val faceData: FaceDataResponse
 )
 
+
+fun FaceData.toResponse(): FaceDataResponse = FaceDataResponse(
+    id = this.id,
+    pid = this.pid,
+    name = this.name,
+    faceLink = this.faceLink,
+    frameLink = this.frameLink,
+    imageLink = this.imageLink,
+    width = this.width,
+    height = this.height,
+    faceWidth = this.faceWidth,
+    faceHeight = this.faceHeight,
+    top = this.top,
+    left = this.left,
+    right = this.right,
+    bottom = this.bottom,
+    landmarks = this.landmarks,
+    smilingProbability = this.smilingProbability,
+    leftEyeOpenProbability = this.leftEyeOpenProbability,
+    rightEyeOpenProbability = this.rightEyeOpenProbability,
+    timestamp = this.timestamp,
+    time = this.time
+)
+
+fun FaceDataResponse.toEntity(): FaceData = FaceData(
+    id = this.id,
+    pid = this.pid,
+    name = this.name,
+    faceLink = this.faceLink,
+    frameLink = this.frameLink,
+    imageLink = this.imageLink,
+    width = this.width,
+    height = this.height,
+    faceWidth = this.faceWidth,
+    faceHeight = this.faceHeight,
+    top = this.top,
+    left = this.left,
+    right = this.right,
+    bottom = this.bottom,
+    landmarks = this.landmarks,
+    smilingProbability = this.smilingProbability,
+    leftEyeOpenProbability = this.leftEyeOpenProbability,
+    rightEyeOpenProbability = this.rightEyeOpenProbability,
+    timestamp = this.timestamp,
+    time = this.time
+)

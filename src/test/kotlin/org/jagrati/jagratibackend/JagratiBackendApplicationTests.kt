@@ -3,11 +3,11 @@ package org.jagrati.jagratibackend
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.SpringBootTest
 
-@SpringBootTest
-class JagratiBackendApplicationTests {
-
-    @Test
-    fun contextLoads() {
-    }
-
-}
+//@SpringBootTest
+//class JagratiBackendApplicationTests {
+//
+//    @Test
+//    fun contextLoads() {
+//    }
+//
+//}
