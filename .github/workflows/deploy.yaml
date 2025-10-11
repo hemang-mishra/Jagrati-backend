@@ -36,7 +36,7 @@ jobs:
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "jagrati_app.tar"
-          target: "/home/${{ secrets.USERNAME}}/jagrati_app.tar"
+          target: "/home/${{ secrets.USERNAME}}"
 
       - name: Deploy on Server
         uses: appleboy/ssh-action@v1.1.0
@@ -51,12 +51,12 @@ jobs:
             docker run -d \
             --name jagrati_app \
             -p 8080:8080 \
-            -e JWT_SECRET_BASE_64=${{secrets.JWT_SECRET_BASE_64}}\
-            -e IMAGE_KIT_PRIVATE_KEY=${{secrets.IMAGE_KIT_PRIVATE_KEY}}\
-            -e OAUTH2_CLIENT_ID=${{secrets.OAUTH2_CLIENT_ID}}\
-            -e OAUTH2_SECRET=${{secrets.OAUTH2_SECRET}}\
-            -e GMAIL_PASS=${{secrets.GMAIL_PASS}}\
-            -e SPRING_DATASOURCE_URL=${{secrets.SPRING_DATASOURCE_URL}}\
-            -e SPRING_DATASOURCE_USERNAME=${{secrets.SPRING_DATASOURCE_USERNAME}}\
-            -e SPRING_DATASOURCE_PASSWORD=${{secrets.SPRING_DATASOURCE_PASSWORD}}\
+            -e JWT_SECRET_BASE_64=${{secrets.JWT_SECRET_BASE_64}} \ 
+            -e IMAGE_KIT_PRIVATE_KEY=${{secrets.IMAGE_KIT_PRIVATE_KEY}} \ 
+            -e OAUTH2_CLIENT_ID=${{secrets.OAUTH2_CLIENT_ID}} \ 
+            -e OAUTH2_SECRET=${{secrets.OAUTH2_SECRET}} \ 
+            -e GMAIL_PASS=${{secrets.GMAIL_PASS}} \ 
+            -e SPRING_DATASOURCE_URL=${{secrets.SPRING_DATASOURCE_URL}} \ 
+            -e SPRING_DATASOURCE_USERNAME=${{secrets.SPRING_DATASOURCE_USERNAME}} \ 
+            -e SPRING_DATASOURCE_PASSWORD=${{secrets.SPRING_DATASOURCE_PASSWORD}} \ 
             jagrati_app:latest
