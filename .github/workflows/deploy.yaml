@@ -45,20 +45,34 @@ jobs:
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            # Start or restart PostgreSQL container
+            docker stop jagrati_postgres || true
+            docker rm jagrati_postgres || true
+            docker run -d \
+              --name jagrati_postgres \
+              -e POSTGRES_DB=${{secrets.POSTGRES_DB}} \
+              -e POSTGRES_USER=${{secrets.POSTGRES_USER}} \
+              -e POSTGRES_PASSWORD=${{secrets.POSTGRES_PASSWORD}} \
+              -p 5432:5432 \
+              postgres:latest
+            # Wait for PostgreSQL to be ready
+            until docker exec jagrati_postgres pg_isready -U ${{secrets.POSTGRES_USER}}; do sleep 2; done
+            # Load and run app
             docker load -i ~/jagrati_app.tar
             docker stop jagrati_app || true
             docker rm jagrati_app || true
             docker ps -q --filter "publish=8080" | xargs -r docker stop
             docker ps -a -q --filter "publish=8080" | xargs -r docker rm
             docker run -d \
-            --name jagrati_app \
-            -p 8080:8080 \
-            -e JWT_SECRET_BASE_64=${{secrets.JWT_SECRET_BASE_64}} \
-            -e IMAGE_KIT_PRIVATE_KEY=${{secrets.IMAGE_KIT_PRIVATE_KEY}} \
-            -e OAUTH2_CLIENT_ID=${{secrets.OAUTH2_CLIENT_ID}} \
-            -e OAUTH2_SECRET=${{secrets.OAUTH2_SECRET}} \
-            -e GMAIL_PASS=${{secrets.GMAIL_PASS}} \
-            -e SPRING_DATASOURCE_URL=${{secrets.SPRING_DATASOURCE_URL}} \
-            -e SPRING_DATASOURCE_USERNAME=${{secrets.SPRING_DATASOURCE_USERNAME}} \
-            -e SPRING_DATASOURCE_PASSWORD=${{secrets.SPRING_DATASOURCE_PASSWORD}} \
-            jagrati_app:latest
+              --name jagrati_app \
+              --link jagrati_postgres:postgres \
+              -p 8080:8080 \
+              -e JWT_SECRET_BASE_64=${{secrets.JWT_SECRET_BASE_64}} \
+              -e IMAGE_KIT_PRIVATE_KEY=${{secrets.IMAGE_KIT_PRIVATE_KEY}} \
+              -e OAUTH2_CLIENT_ID=${{secrets.OAUTH2_CLIENT_ID}} \
+              -e OAUTH2_SECRET=${{secrets.OAUTH2_SECRET}} \
+              -e GMAIL_PASS=${{secrets.GMAIL_PASS}} \
+              -e SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${{secrets.POSTGRES_DB}} \
+              -e SPRING_DATASOURCE_USERNAME=${{secrets.POSTGRES_USER}} \
+              -e SPRING_DATASOURCE_PASSWORD=${{secrets.POSTGRES_PASSWORD}} \
+              jagrati_app:latest
