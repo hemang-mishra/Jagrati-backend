@@ -48,7 +48,7 @@ jobs:
             docker load -i ~/jagrati_app.tar
             docker stop jagrati_app || true
             docker rm jagrati_app || true
-            doceker run -d \
+            docker run -d \
             --name jagrati_app \
             -p 8080:8080 \
             -e JWT_SECRET_BASE_64=${{secrets.JWT_SECRET_BASE_64}}\
