@@ -48,6 +48,8 @@ jobs:
             docker load -i ~/jagrati_app.tar
             docker stop jagrati_app || true
             docker rm jagrati_app || true
+            docker ps -q --filter "publish=8080" | xargs -r docker stop
+            docker ps -a -q --filter "publish=8080" | xargs -r docker rm
             docker run -d \
             --name jagrati_app \
             -p 8080:8080 \
