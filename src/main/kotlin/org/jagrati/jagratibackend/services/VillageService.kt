@@ -5,6 +5,7 @@ import org.jagrati.jagratibackend.dto.LongStringResponse
 import org.jagrati.jagratibackend.dto.NameDescriptionRequest
 import org.jagrati.jagratibackend.dto.StringRequest
 import org.jagrati.jagratibackend.dto.StudentRequest
+import org.jagrati.jagratibackend.dto.VillageListResponse
 import org.jagrati.jagratibackend.entities.Group
 import org.jagrati.jagratibackend.entities.Student
 import org.jagrati.jagratibackend.entities.Village
@@ -32,12 +33,17 @@ class VillageService(
         villageRepository.save(village.copy(isActive = false))
     }
 
-    fun getAllActiveVillages(): List<LongStringResponse>{
-        return villageRepository.findAll().filter { it.isActive }.map {
+    fun getAllActiveVillages(): VillageListResponse {
+        return VillageListResponse(villageRepository.findAll().filter { it.isActive }.map {
             LongStringResponse(
                 id = it.id,
                 data = it.name
             )
-        }
+        })
+    }
+
+    fun getVillageById(id: Long): LongStringResponse {
+        val village = villageRepository.findById(id).orElseThrow { IllegalArgumentException("Village not found") }
+        return LongStringResponse(data = village.name, id = village.id)
     }
 }

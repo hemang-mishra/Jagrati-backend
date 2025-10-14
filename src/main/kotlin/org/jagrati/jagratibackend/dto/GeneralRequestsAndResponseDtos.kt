@@ -23,3 +23,7 @@ data class LongStringResponse(
     val data: String,
     val id: Long
 )
+
+data class VillageListResponse(
+    val villages: List<LongStringResponse>
+)

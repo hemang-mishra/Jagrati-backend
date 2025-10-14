@@ -17,8 +17,12 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import org.jagrati.jagratibackend.dto.VillageListResponse
+import org.jagrati.jagratibackend.entities.Village
 import org.jagrati.jagratibackend.entities.enums.AllPermissions
 import org.jagrati.jagratibackend.security.RequiresPermission
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.RequestParam
 
 @RestController
 @RequestMapping("/api/village")
@@ -52,9 +56,13 @@ class VillageController(
     @ApiResponses(value = [
         ApiResponse(responseCode = "200", description = "List of active villages", content = [Content(schema = Schema(implementation = LongStringResponse::class))])
     ])
-    @RequiresPermission(AllPermissions.VILLAGE_MANAGE)
     @GetMapping
-    fun getAllActiveVillages(): ResponseEntity<List<LongStringResponse>> {
+    fun getAllActiveVillages(): ResponseEntity<VillageListResponse> {
         return ResponseEntity.ok(service.getAllActiveVillages())
+    }
+
+    @GetMapping("/get/{id}")
+    fun getVillageById(@PathVariable id: Long): ResponseEntity<LongStringResponse> {
+        return ResponseEntity.ok(service.getVillageById(id))
     }
 }
