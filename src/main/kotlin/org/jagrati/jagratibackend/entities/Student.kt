@@ -34,7 +34,7 @@ data class Student(
     @Column(name = "profile_pic", length = 255)
     val profilePic: String? = null,
 
-    @Column(name = "school_class", length = 20)
+    @Column(name = "school_class", length = 100)
     val schoolClass: String? = null,
 
     @ManyToOne(fetch = FetchType.LAZY)
