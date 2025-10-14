@@ -17,6 +17,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import org.jagrati.jagratibackend.dto.GroupListResponse
 import org.jagrati.jagratibackend.entities.enums.AllPermissions
 import org.jagrati.jagratibackend.security.RequiresPermission
 
@@ -50,10 +51,10 @@ class GroupController(
 
     @Operation(summary = "List active groups", description = "Fetches all active groups")
     @ApiResponses(value = [
-        ApiResponse(responseCode = "200", description = "List of active groups", content = [Content(schema = Schema(implementation = LongStringResponse::class))])
+        ApiResponse(responseCode = "200", description = "List of active groups", content = [Content(schema = Schema(implementation = GroupListResponse::class))])
     ])
     @GetMapping
-    fun getAllActiveGroups(): ResponseEntity<List<LongStringResponse>> {
+    fun getAllActiveGroups(): ResponseEntity<GroupListResponse> {
         return ResponseEntity.ok(service.getAllActiveGroups())
     }
 }

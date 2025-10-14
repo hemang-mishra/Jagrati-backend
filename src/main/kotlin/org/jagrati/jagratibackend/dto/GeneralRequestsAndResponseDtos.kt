@@ -27,3 +27,7 @@ data class LongStringResponse(
 data class VillageListResponse(
     val villages: List<LongStringResponse>
 )
+
+data class GroupListResponse(
+    val groups: List<LongStringResponse>
+)

@@ -1,5 +1,6 @@
 package org.jagrati.jagratibackend.services
 
+import org.jagrati.jagratibackend.dto.GroupListResponse
 import org.jagrati.jagratibackend.dto.LongRequest
 import org.jagrati.jagratibackend.dto.LongStringResponse
 import org.jagrati.jagratibackend.dto.NameDescriptionRequest
@@ -25,9 +26,9 @@ class GroupService(
         groupRepository.save(group.copy(isActive = false))
     }
 
-    fun getAllActiveGroups(): List<LongStringResponse> {
-        return groupRepository.findAll()
+    fun getAllActiveGroups(): GroupListResponse {
+        return GroupListResponse(groupRepository.findAll()
             .filter { it.isActive }
-            .map { LongStringResponse(id = it.id, data = it.name) }
+            .map { LongStringResponse(id = it.id, data = it.name) })
     }
 }
