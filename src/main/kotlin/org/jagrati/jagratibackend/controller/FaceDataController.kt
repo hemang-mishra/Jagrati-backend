@@ -21,14 +21,9 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/face-data")
 class FaceDataController(private val faceDataService: FaceDataService) {
-    @RequiresPermission(AllPermissions.FACE_AUTH_CREATE)
-    @PostMapping
-    fun add(@RequestBody request: AddFaceDataRequest): ResponseEntity<FaceDataResponse> =
-        ResponseEntity.ok(faceDataService.addFaceData(request))
-
     @RequiresPermission(AllPermissions.FACE_AUTH_UPDATE)
-    @PutMapping("/{pid}")
-    fun update(@PathVariable pid: String, @RequestBody request: UpdateFaceDataRequest): ResponseEntity<FaceDataResponse> =
+    @PostMapping("/{pid}")
+    fun upsert(@PathVariable pid: String, @RequestBody request: UpdateFaceDataRequest): ResponseEntity<FaceDataResponse> =
         ResponseEntity.ok(faceDataService.updateFaceData(pid, request))
 
     @RequiresPermission(AllPermissions.FACE_AUTH_DELETE)
