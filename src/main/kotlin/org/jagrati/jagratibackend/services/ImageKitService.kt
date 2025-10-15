@@ -2,6 +2,8 @@ package org.jagrati.jagratibackend.services
 
 import org.apache.http.HttpHeaders
 import org.jagrati.jagratibackend.dto.imagekit.ImageKitResponse
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
@@ -18,6 +20,7 @@ class ImageKitService(
     private val privateKey: String
 ) {
     private val baseUrl = "https://api.imagekit.io/v1"
+    private val logger: Logger = LoggerFactory.getLogger(ImageKitService::class.java)
 
     private val client = WebClient.builder()
         .baseUrl(baseUrl)
@@ -34,6 +37,17 @@ class ImageKitService(
         )
     }
 
+    fun deleteFile(fileId: String){
+        val response = client.delete()
+            .uri("/files/$fileId")
+            .retrieve()
+            .toBodilessEntity()
+            .block()
+
+        if(response?.statusCode?.is2xxSuccessful != true){
+            logger.error("Failed to delete image ${response?.statusCode}")
+        }
+    }
 
     private fun generateSignature(token: String, expiry: Long): String {
         val message = token + expiry.toString()
