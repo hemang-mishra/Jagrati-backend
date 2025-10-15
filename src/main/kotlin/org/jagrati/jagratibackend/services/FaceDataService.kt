@@ -1,5 +1,6 @@
 package org.jagrati.jagratibackend.services
 
+import org.hibernate.query.results.Builders.entity
 import org.jagrati.jagratibackend.dto.*
 import org.jagrati.jagratibackend.entities.FaceData
 import org.jagrati.jagratibackend.repository.FaceDataRepository
@@ -26,9 +27,9 @@ class FaceDataService(
             FaceData(
                 pid = pid,
                 name = request.name,
-                faceLink = request.faceLink,
-                frameLink = request.frameLink,
-                imageLink = request.imageLink,
+                faceResponse = request.faceResponse?.convertToString(),
+                frameResponse = request.frameResponse?.convertToString(),
+                imageResponse = request.imageResponse?.convertToString(),
                 width = request.width,
                 height = request.height,
                 faceWidth = request.faceWidth,
@@ -50,12 +51,15 @@ class FaceDataService(
 
     @Transactional
     fun updateFaceData(pid: String, request: UpdateFaceDataRequest): FaceDataResponse {
-        val existing = faceDataRepository.findByPid(pid) ?: throw IllegalArgumentException("Face data not found")
-        val updated = existing.copy(
+        val existing = faceDataRepository.findByPid(pid)
+        if(existing != null){
+            //Remove the images from image kit
+        }
+        val entity = existing?.copy(
             name = request.name ?: existing.name,
-            faceLink = request.faceLink ?: existing.faceLink,
-            frameLink = request.frameLink ?: existing.frameLink,
-            imageLink = request.imageLink ?: existing.imageLink,
+            faceResponse = request.faceResponse?.convertToString(),
+            frameResponse = request.frameResponse?.convertToString(),
+            imageResponse = request.imageResponse?.convertToString(),
             width = request.width ?: existing.width,
             height = request.height ?: existing.height,
             faceWidth = request.faceWidth ?: existing.faceWidth,
@@ -71,8 +75,30 @@ class FaceDataService(
             timestamp = request.timestamp ?: existing.timestamp,
             time = request.time ?: existing.time
         )
-        return faceDataRepository.save(updated).toResponse()
+            ?: FaceData(
+                pid = pid,
+                name = request.name ?: "",
+                faceResponse = request.faceResponse?.convertToString(),
+                frameResponse = request.frameResponse?.convertToString(),
+                imageResponse = request.imageResponse?.convertToString(),
+                width = request.width ?: 0,
+                height = request.height ?: 0,
+                faceWidth = request.faceWidth ?: 0,
+                faceHeight = request.faceHeight ?: 0,
+                top = request.top ?: 0,
+                left = request.left ?: 0,
+                right = request.right ?: 0,
+                bottom = request.bottom ?: 0,
+                landmarks = request.landmarks ?: "",
+                smilingProbability = request.smilingProbability ?: 0.0f,
+                leftEyeOpenProbability = request.leftEyeOpenProbability ?: 0.0f,
+                rightEyeOpenProbability = request.rightEyeOpenProbability ?: 0.0f,
+                timestamp = request.timestamp,
+                time = request.time
+            )
+        return faceDataRepository.save(entity).toResponse()
     }
+
 
     @Transactional
     fun deleteFaceData(pid: String) {
@@ -150,13 +176,14 @@ class FaceDataService(
         val currentUser = SecurityUtils.getCurrentUser() ?: throw IllegalArgumentException("No current user")
         val pid = currentUser.pid
         faceDataRepository.deleteByPid(pid)
+        faceDataRepository.flush()
         val saved = faceDataRepository.save(
             FaceData(
                 pid = pid,
                 name = request.name,
-                faceLink = request.faceLink,
-                frameLink = request.frameLink,
-                imageLink = request.imageLink,
+                frameResponse = request.frameResponse?.convertToString(),
+                faceResponse = request.faceResponse?.convertToString(),
+                imageResponse = request.imageResponse?.convertToString(),
                 width = request.width,
                 height = request.height,
                 faceWidth = request.faceWidth,
@@ -186,9 +213,9 @@ class FaceDataService(
         id = id,
         pid = pid,
         name = name,
-        faceLink = faceLink,
-        frameLink = frameLink,
-        imageLink = imageLink,
+        frameResponse = ImageKitResponse().getFromString(frameResponse),
+        faceResponse = ImageKitResponse().getFromString(faceResponse),
+        imageResponse = ImageKitResponse().getFromString(imageResponse),
         width = width,
         height = height,
         faceWidth = faceWidth,

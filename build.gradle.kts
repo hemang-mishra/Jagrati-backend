@@ -57,6 +57,9 @@ dependencies {
     // SpringDoc OpenAPI - with compatible versions
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9")
     implementation("org.springdoc:springdoc-openapi-starter-common:2.8.9")
+
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
+
 }
 
 kotlin {

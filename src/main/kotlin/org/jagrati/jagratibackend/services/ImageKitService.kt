@@ -1,8 +1,10 @@
 package org.jagrati.jagratibackend.services
 
+import org.apache.http.HttpHeaders
 import org.jagrati.jagratibackend.dto.imagekit.ImageKitResponse
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import org.springframework.web.reactive.function.client.WebClient
 import java.util.UUID
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
@@ -15,6 +17,13 @@ class ImageKitService(
     @Value("\${imagekit.private-key}")
     private val privateKey: String
 ) {
+    private val baseUrl = "https://api.imagekit.io/v1"
+
+    private val client = WebClient.builder()
+        .baseUrl(baseUrl)
+        .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer $privateKey")
+        .build()
+
     fun getAuthenticationParameters(): ImageKitResponse {
         val token = UUID.randomUUID().toString()
         val expiry = (System.currentTimeMillis() / 1000) + IMAGE_KIT_EXPIRY_SECOND
@@ -24,6 +33,7 @@ class ImageKitService(
             signature = generateSignature(token, expiry)
         )
     }
+
 
     private fun generateSignature(token: String, expiry: Long): String {
         val message = token + expiry.toString()

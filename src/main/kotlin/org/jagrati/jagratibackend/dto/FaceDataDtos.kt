@@ -1,14 +1,16 @@
 package org.jagrati.jagratibackend.dto
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import org.jagrati.jagratibackend.entities.FaceData
 import org.jagrati.jagratibackend.entities.enums.Gender
 
 data class AddFaceDataRequest(
     val pid: String,
     val name: String? = null,
-    val faceLink: String? = null,
-    val frameLink: String? = null,
-    val imageLink: String? = null,
+    val faceResponse: ImageKitResponse?,
+    val frameResponse: ImageKitResponse?,
+    val imageResponse: ImageKitResponse?,
     val width: Int? = null,
     val height: Int? = null,
     val faceWidth: Int? = null,
@@ -27,9 +29,9 @@ data class AddFaceDataRequest(
 
 data class UpdateFaceDataRequest(
     val name: String? = null,
-    val faceLink: String? = null,
-    val frameLink: String? = null,
-    val imageLink: String? = null,
+    val faceResponse: ImageKitResponse?,
+    val frameResponse: ImageKitResponse?,
+    val imageResponse: ImageKitResponse?,
     val width: Int? = null,
     val height: Int? = null,
     val faceWidth: Int? = null,
@@ -50,9 +52,9 @@ data class FaceDataResponse(
     val id: Long,
     val pid: String,
     val name: String?,
-    val faceLink: String?,
-    val frameLink: String?,
-    val imageLink: String?,
+    val faceResponse: ImageKitResponse?,
+    val frameResponse: ImageKitResponse?,
+    val imageResponse: ImageKitResponse?,
     val width: Int?,
     val height: Int?,
     val faceWidth: Int?,
@@ -112,14 +114,15 @@ data class VolunteerWithFaceDataResponse(
     val faceData: FaceDataResponse
 )
 
+val objectMapper = jacksonObjectMapper()
 
 fun FaceData.toResponse(): FaceDataResponse = FaceDataResponse(
     id = this.id,
     pid = this.pid,
     name = this.name,
-    faceLink = this.faceLink,
-    frameLink = this.frameLink,
-    imageLink = this.imageLink,
+    faceResponse = objectMapper.readValue(this.faceResponse, ImageKitResponse::class.java),
+    frameResponse = objectMapper.readValue(this.frameResponse, ImageKitResponse::class.java),
+    imageResponse = objectMapper.readValue(this.faceResponse, ImageKitResponse::class.java),
     width = this.width,
     height = this.height,
     faceWidth = this.faceWidth,
@@ -140,9 +143,9 @@ fun FaceDataResponse.toEntity(): FaceData = FaceData(
     id = this.id,
     pid = this.pid,
     name = this.name,
-    faceLink = this.faceLink,
-    frameLink = this.frameLink,
-    imageLink = this.imageLink,
+    faceResponse = objectMapper.writeValueAsString(this.faceResponse),
+    frameResponse = objectMapper.writeValueAsString(this.frameResponse),
+    imageResponse = objectMapper.writeValueAsString(this.imageResponse),
     width = this.width,
     height = this.height,
     faceWidth = this.faceWidth,
@@ -158,3 +161,24 @@ fun FaceDataResponse.toEntity(): FaceData = FaceData(
     timestamp = this.timestamp,
     time = this.time
 )
+
+
+data class ImageKitResponse(
+    val fileId: String = "",
+    val name: String = "",
+    val url: String = "",
+    val thumbnailUrl: String? = null,
+    val height: Int? = null,
+    val width: Int? = null,
+    val size: Long? = null,
+    val filePath: String? = null,
+){
+    fun convertToString(): String{
+        return objectMapper.writeValueAsString(this)
+    }
+
+    fun getFromString(value: String?): ImageKitResponse?{
+        if(value == null || value.isEmpty()){return null}
+        return objectMapper.readValue(value, ImageKitResponse::class.java)
+    }
+}
