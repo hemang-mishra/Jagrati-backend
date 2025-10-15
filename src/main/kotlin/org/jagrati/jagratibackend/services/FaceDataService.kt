@@ -14,7 +14,8 @@ import org.springframework.transaction.annotation.Transactional
 class FaceDataService(
     private val faceDataRepository: FaceDataRepository,
     private val studentRepository: StudentRepository,
-    private val volunteerRepository: VolunteerRepository
+    private val volunteerRepository: VolunteerRepository,
+    private val imageKitService: ImageKitService
 ) {
     @Transactional
     fun addFaceData(request: AddFaceDataRequest): FaceDataResponse {
@@ -22,7 +23,9 @@ class FaceDataService(
         if (!studentRepository.existsById(pid) && !volunteerRepository.existsById(pid)) {
             throw IllegalArgumentException("PID not found in students or volunteers")
         }
+        removeImagesFromImageKit(pid)
         faceDataRepository.deleteByPid(pid)
+        faceDataRepository.flush()
         val saved = faceDataRepository.save(
             FaceData(
                 pid = pid,
@@ -52,9 +55,9 @@ class FaceDataService(
     @Transactional
     fun updateFaceData(pid: String, request: UpdateFaceDataRequest): FaceDataResponse {
         val existing = faceDataRepository.findByPid(pid)
-        if(existing != null){
-            //Remove the images from image kit
-        }
+        removeImagesFromImageKit(pid)
+        faceDataRepository.deleteByPid(pid)
+        faceDataRepository.flush()
         val entity = existing?.copy(
             name = request.name ?: existing.name,
             faceResponse = request.faceResponse?.convertToString(),
@@ -175,6 +178,7 @@ class FaceDataService(
     fun addFaceDataForCurrentUser(request: UpdateFaceDataRequest): FaceDataResponse {
         val currentUser = SecurityUtils.getCurrentUser() ?: throw IllegalArgumentException("No current user")
         val pid = currentUser.pid
+        removeImagesFromImageKit(pid)
         faceDataRepository.deleteByPid(pid)
         faceDataRepository.flush()
         val saved = faceDataRepository.save(
@@ -231,4 +235,22 @@ class FaceDataService(
         timestamp = timestamp,
         time = time
     )
+
+    private fun removeImagesFromImageKit(pid: String){
+        val existing = faceDataRepository.findByPid(pid) ?: return
+
+        //Remove the images from image kit
+        val imageResponse = ImageKitResponse().getFromString(existing.imageResponse)
+        val faceResponse = ImageKitResponse().getFromString(existing.faceResponse)
+        val frameResponse = ImageKitResponse().getFromString(existing.frameResponse)
+        if(imageResponse != null){
+            imageKitService.deleteFile(imageResponse.fileId)
+        }
+        if(frameResponse != null){
+            imageKitService.deleteFile(frameResponse.fileId)
+        }
+        if(faceResponse != null){
+            imageKitService.deleteFile(faceResponse.fileId)
+        }
+    }
 }
