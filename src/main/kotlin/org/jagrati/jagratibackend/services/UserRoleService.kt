@@ -14,7 +14,6 @@ import org.jagrati.jagratibackend.dto.toDTO
 import org.jagrati.jagratibackend.dto.toResponse
 import org.jagrati.jagratibackend.entities.User
 import org.jagrati.jagratibackend.entities.UserRole
-import org.jagrati.jagratibackend.repository.FaceDataRepository
 import org.jagrati.jagratibackend.repository.GroupRepository
 import org.jagrati.jagratibackend.repository.RolePermissionRepository
 import org.jagrati.jagratibackend.repository.RoleRepository
@@ -41,7 +40,6 @@ class UserRoleService(
     private val groupRepository: GroupRepository,
     private val studentRepository: StudentRepository,
     private val volunteerRepository: VolunteerRepository,
-    private val faceDataRepository: FaceDataRepository
 ) {
     @Transactional
     fun assignRoleToUser(request: AssignRoleToUserRequest, assignedByPid: String): UserRoleAssignmentResponse {
@@ -127,14 +125,12 @@ class UserRoleService(
             val students = studentRepository.findAllByUpdatedAtAfter(updatedAfter).map { it.toResponse() }
             val villages = villageRepository.findAllByUpdatedAtAfter(updatedAfter).map { it.toDTO() }
             val groups = groupRepository.findAllByUpdatedAtAfter(updatedAfter).map { it.toDTO() }
-            val faceData = faceDataRepository.findAllByUpdatedAtAfter(updatedAfter).map { it.toResponse() }
             dto = dto.copy(
                 volunteers = volunteers,
                 students = students,
                 volunteerProfile = volunteer?.toResponse(),
                 villages = villages,
                 groups = groups,
-                faceData = faceData,
                 isVolunteer = true
             )
         }

@@ -11,6 +11,7 @@ import RejectVolunteerRequest
 import UserSummaryDTO
 import VolunteerRequestActionResponse
 import org.jagrati.jagratibackend.config.InitialRoles
+import org.jagrati.jagratibackend.entities.ImageKitResponse
 import org.jagrati.jagratibackend.entities.User
 import org.jagrati.jagratibackend.entities.UserRole
 import org.jagrati.jagratibackend.entities.Volunteer
@@ -68,7 +69,6 @@ class VolunteerRequestService(
             state = request.state,
             dateOfBirth = dateOfBirth,
             contactNumber = request.contactNumber,
-            profileImageUrl = request.profileImageUrl,
             college = request.college,
             branch = request.branch,
             yearOfStudy = request.yearOfStudy,
@@ -193,7 +193,6 @@ class VolunteerRequestService(
             programme = request.programme,
             dateOfBirth = request.dateOfBirth,
             contactNumber = request.contactNumber,
-            profileImageUrl = request.profileImageUrl,
             college = request.college,
             branch = request.branch,
             yearOfStudy = request.yearOfStudy,

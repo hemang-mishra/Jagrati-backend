@@ -4,6 +4,8 @@ import org.jagrati.jagratibackend.dto.StudentRequest
 import org.jagrati.jagratibackend.dto.UpdateStudentRequest
 import org.jagrati.jagratibackend.dto.StudentGroupHistoryResponse
 import org.jagrati.jagratibackend.dto.StudentResponse
+import org.jagrati.jagratibackend.dto.toResponse
+import org.jagrati.jagratibackend.entities.ImageKitResponse
 import org.jagrati.jagratibackend.entities.Student
 import org.jagrati.jagratibackend.entities.StudentGroupHistory
 import org.jagrati.jagratibackend.entities.enums.Gender
@@ -21,7 +23,8 @@ class StudentDetailsService(
     private val studentRepository: StudentRepository,
     private val villageRepository: VillageRepository,
     private val groupRepository: GroupRepository,
-    private val studentGroupHistoryRepository: StudentGroupHistoryRepository
+    private val studentGroupHistoryRepository: StudentGroupHistoryRepository,
+    private val imageKitService: ImageKitService
 ) {
     fun registerNewStudent(details: StudentRequest) {
         val village = villageRepository.findById(details.villageId).orElseThrow { IllegalArgumentException("Village not found") }
@@ -34,7 +37,7 @@ class StudentDetailsService(
                 lastName = details.lastName,
                 yearOfBirth = details.yearOfBirth,
                 gender = Gender.valueOf(details.gender),
-                profilePic = details.profilePic,
+                profilePic = details.profilePic?.convertToString(),
                 schoolClass = details.schoolClass,
                 village = village,
                 group = group,
@@ -66,7 +69,7 @@ class StudentDetailsService(
             lastName = details.lastName ?: existing.lastName,
             yearOfBirth = details.yearOfBirth ?: existing.yearOfBirth,
             gender = details.gender?.let { Gender.valueOf(it) } ?: existing.gender,
-            profilePic = details.profilePic ?: existing.profilePic,
+            profilePic = details.profilePic?.convertToString() ?: existing.profilePic,
             schoolClass = details.schoolClass ?: existing.schoolClass,
             village = newVillage,
             group = newGroup,
@@ -77,6 +80,12 @@ class StudentDetailsService(
             isActive = details.isActive ?: existing.isActive,
         )
         studentRepository.save(updated)
+        if(details.profilePic?.convertToString() != existing.profilePic){
+            val existingProfilePic = ImageKitResponse.getFromString(existing.profilePic)
+            if(existingProfilePic?.fileId != null){
+                imageKitService.deleteFile(existingProfilePic.fileId)
+            }
+        }
         if (existingGroupId != newGroup.id) {
             val currentUser = SecurityUtils.getCurrentUser() ?: throw IllegalArgumentException("No current user")
             studentGroupHistoryRepository.save(
@@ -108,32 +117,11 @@ class StudentDetailsService(
     }
 
     fun getAllStudents(): List<StudentResponse> {
-        return studentRepository.findAll().map { s -> studentToResponse(s) }
+        return studentRepository.findAll().map { s -> s.toResponse()}
     }
 
     fun getStudentByPid(pid: String): StudentResponse {
         val s = studentRepository.findById(pid).orElseThrow { IllegalArgumentException("Student not found") }
-        return studentToResponse(s)
-    }
-
-    private fun studentToResponse(s: Student): StudentResponse {
-        return StudentResponse(
-            pid = s.pid,
-            firstName = s.firstName,
-            lastName = s.lastName,
-            yearOfBirth = s.yearOfBirth,
-            gender = s.gender,
-            profilePic = s.profilePic,
-            schoolClass = s.schoolClass,
-            villageId = s.village.id,
-            villageName = s.village.name,
-            groupId = s.group.id,
-            groupName = s.group.name,
-            primaryContactNo = s.primaryContactNo,
-            secondaryContactNo = s.secondaryContactNo,
-            fathersName = s.fathersName,
-            mothersName = s.mothersName,
-            isActive = s.isActive
-        )
+        return s.toResponse()
     }
 }

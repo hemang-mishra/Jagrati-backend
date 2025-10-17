@@ -4,6 +4,7 @@ import org.jagrati.jagratibackend.entities.Student
 import org.jagrati.jagratibackend.entities.Volunteer
 import org.jagrati.jagratibackend.entities.Village
 import org.jagrati.jagratibackend.entities.Group
+import org.jagrati.jagratibackend.entities.ImageKitResponse
 import org.jagrati.jagratibackend.entities.User
 import org.jagrati.jagratibackend.entities.enums.Gender
 import java.time.LocalDate
@@ -14,7 +15,7 @@ data class StudentResponse(
     val lastName: String,
     val yearOfBirth: Int?,
     val gender: Gender,
-    val profilePic: String?,
+    val profilePic: ImageKitResponse?,
     val schoolClass: String?,
     val villageId: Long,
     val villageName: String,
@@ -45,8 +46,30 @@ data class VolunteerResponse(
     val contactNumber: String?,
     val college: String?,
     val branch: String?,
+    val profilePicDetails: ImageKitResponse?,
     val yearOfStudy: Int?,
     val isActive: Boolean
+)
+
+data class UpdateVolunteerRequest(
+    val rollNumber: String?,
+    val firstName: String?,
+    val lastName: String?,
+    val gender: Gender?,
+    val alternateEmail: String?,
+    val batch: String?,
+    val programme: String?,
+    val streetAddress1: String?,
+    val streetAddress2: String?,
+    val pincode: String?,
+    val city: String?,
+    val state: String?,
+    val dateOfBirth: String?,
+    val contactNumber: String?,
+    val college: String?,
+    val branch: String?,
+    val profilePicDetails: ImageKitResponse?,
+    val yearOfStudy: Int?
 )
 
 
@@ -56,7 +79,7 @@ fun Student.toResponse(): StudentResponse = StudentResponse(
     lastName = this.lastName,
     yearOfBirth = this.yearOfBirth,
     gender = this.gender,
-    profilePic = this.profilePic,
+    profilePic = ImageKitResponse.getFromString(this.profilePic),
     schoolClass = this.schoolClass,
     villageId = this.village.id,
     villageName = this.village.name,
@@ -76,7 +99,7 @@ fun StudentResponse.toEntity(village: Village, group: Group, registeredBy: User)
     lastName = this.lastName,
     yearOfBirth = this.yearOfBirth,
     gender = this.gender,
-    profilePic = this.profilePic,
+    profilePic = this.profilePic?.convertToString(),
     schoolClass = this.schoolClass,
     village = village,
     group = group,
@@ -108,7 +131,8 @@ fun Volunteer.toResponse(): VolunteerResponse = VolunteerResponse(
     college = this.college,
     branch = this.branch,
     yearOfStudy = this.yearOfStudy,
-    isActive = this.isActive
+    isActive = this.isActive,
+    profilePicDetails = ImageKitResponse.getFromString(this.profilePicDetails)
 )
 
 fun VolunteerResponse.toEntity(): Volunteer = Volunteer(
@@ -130,5 +154,6 @@ fun VolunteerResponse.toEntity(): Volunteer = Volunteer(
     college = this.college,
     branch = this.branch,
     yearOfStudy = this.yearOfStudy,
-    isActive = this.isActive
+    isActive = this.isActive,
+    profilePicDetails = this.profilePicDetails?.convertToString()
 )

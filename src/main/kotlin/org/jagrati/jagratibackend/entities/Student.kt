@@ -31,7 +31,7 @@ data class Student(
     @Enumerated(EnumType.STRING)
     val gender: Gender,
 
-    @Column(name = "profile_pic", length = 255)
+    @Column(name = "profile_pic_data", columnDefinition = "TEXT")
     val profilePic: String? = null,
 
     @Column(name = "school_class", length = 100)

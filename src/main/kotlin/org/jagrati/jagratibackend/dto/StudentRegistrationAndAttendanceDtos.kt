@@ -1,12 +1,14 @@
 package org.jagrati.jagratibackend.dto
 
+import org.jagrati.jagratibackend.entities.ImageKitResponse
+
 data class StudentRequest(
     val pid: String,
     val firstName: String,
     val lastName: String,
     val yearOfBirth: Int? = null,
     val gender: String,
-    val profilePic: String? = null,
+    val profilePic: ImageKitResponse? = null,
     val schoolClass: String? = null,
     val villageId: Long,
     val groupId: Long,
@@ -22,7 +24,7 @@ data class UpdateStudentRequest(
     val lastName: String? = null,
     val yearOfBirth: Int? = null,
     val gender: String? = null,
-    val profilePic: String? = null,
+    val profilePic: ImageKitResponse? = null,
     val schoolClass: String? = null,
     val villageId: Long? = null,
     val groupId: Long? = null,
