@@ -1,9 +1,9 @@
 import jakarta.validation.constraints.NotBlank
-import org.jagrati.jagratibackend.dto.FaceDataResponse
 import org.jagrati.jagratibackend.dto.GroupDTO
 import org.jagrati.jagratibackend.dto.StudentResponse
 import org.jagrati.jagratibackend.dto.VillageDTO
 import org.jagrati.jagratibackend.dto.VolunteerResponse
+import org.jagrati.jagratibackend.entities.ImageKitResponse
 import org.jagrati.jagratibackend.entities.Village
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -34,7 +34,6 @@ data class DetailedVolunteerRequestResponse(
     val programme: String?,
     val dateOfBirth: LocalDate,
     val contactNumber: String?,
-    val profileImageUrl: String?,
     val college: String?,
     val branch: String?,
     val yearOfStudy: Int?,
@@ -144,7 +143,6 @@ data class CreateVolunteerRequest(
     val state: String?,
     @field:NotBlank val dateOfBirth: String, // Will be parsed to LocalDate
     val contactNumber: String?,
-    val profileImageUrl: String?,
     val college: String?,
     val branch: String?,
     val yearOfStudy: Int?
@@ -160,6 +158,5 @@ data class UserDetailsWithRolesAndPermissions(
     val students: List<StudentResponse> = emptyList(),
     val volunteers: List<VolunteerResponse> = emptyList(),
     val volunteerProfile: VolunteerResponse? = null,
-    val faceData: List<FaceDataResponse> = emptyList(),
     val isVolunteer: Boolean = false
 )

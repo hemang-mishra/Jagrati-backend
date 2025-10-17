@@ -65,9 +65,6 @@ data class VolunteerRequest(
     @Column(name = "contact_number", length = 20)
     val contactNumber: String?,
 
-    @Column(name = "profile_image_url", length = 255)
-    val profileImageUrl: String?,
-
     @Column(name = "college", length = 100)
     val college: String?,
 

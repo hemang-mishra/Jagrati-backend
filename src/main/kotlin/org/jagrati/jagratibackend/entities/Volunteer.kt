@@ -68,6 +68,9 @@ data class Volunteer(
     @Column(name = "year_of_study")
     val yearOfStudy: Int? = null,
 
+    @Column(name = "profile_pic_details", columnDefinition = "TEXT")
+    val profilePicDetails: String? = null,
+
     @Column(name = "is_active", nullable = false)
     var isActive: Boolean = true
 ) : BaseEntity()

@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
+import java.util.Base64
 import java.util.UUID
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
@@ -24,7 +25,7 @@ class ImageKitService(
 
     private val client = WebClient.builder()
         .baseUrl(baseUrl)
-        .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer $privateKey")
+        .defaultHeader(HttpHeaders.AUTHORIZATION, "Basic " + Base64.getEncoder().encodeToString("$privateKey:".toByteArray()))
         .build()
 
     fun getAuthenticationParameters(): ImageKitResponse {
@@ -38,14 +39,18 @@ class ImageKitService(
     }
 
     fun deleteFile(fileId: String){
-        val response = client.delete()
-            .uri("/files/$fileId")
-            .retrieve()
-            .toBodilessEntity()
-            .block()
+        try {
+            val response = client.delete()
+                .uri("/files/$fileId")
+                .retrieve()
+                .toBodilessEntity()
+                .block()
 
-        if(response?.statusCode?.is2xxSuccessful != true){
-            logger.error("Failed to delete image ${response?.statusCode}")
+            if (response?.statusCode?.is2xxSuccessful != true) {
+                logger.error("Failed to delete image ${response?.statusCode}")
+            }
+        }catch (e: Exception){
+            logger.error("Failed to delete image ${e.message}")
         }
     }
 
