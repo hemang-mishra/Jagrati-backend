@@ -27,7 +27,7 @@ class VolunteerService(
         val existingVolunteer = volunteerRepository.findById(pid)
             .orElseThrow { IllegalArgumentException("Volunteer not found") }
 
-        if(updateRequest.profilePicDetails?.convertToString() != existingVolunteer.profilePicDetails){
+        if(updateRequest.profilePic?.convertToString() != existingVolunteer.profilePicDetails){
             val existingProfilePic = ImageKitResponse.getFromString(existingVolunteer.profilePicDetails)
             if(existingProfilePic?.fileId != null)
             imageKitService.deleteFile(existingProfilePic.fileId)
@@ -51,7 +51,7 @@ class VolunteerService(
             college = updateRequest.college ?: existingVolunteer.college,
             branch = updateRequest.branch ?: existingVolunteer.branch,
             yearOfStudy = updateRequest.yearOfStudy ?: existingVolunteer.yearOfStudy,
-            profilePicDetails = updateRequest.profilePicDetails?.convertToString() ?: existingVolunteer.profilePicDetails
+            profilePicDetails = updateRequest.profilePic?.convertToString() ?: existingVolunteer.profilePicDetails
         )
 
         val savedVolunteer = volunteerRepository.save(updatedVolunteer)

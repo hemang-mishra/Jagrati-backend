@@ -46,7 +46,7 @@ data class VolunteerResponse(
     val contactNumber: String?,
     val college: String?,
     val branch: String?,
-    val profilePicDetails: ImageKitResponse?,
+    val profilePic: ImageKitResponse?,
     val yearOfStudy: Int?,
     val isActive: Boolean
 )
@@ -68,7 +68,7 @@ data class UpdateVolunteerRequest(
     val contactNumber: String?,
     val college: String?,
     val branch: String?,
-    val profilePicDetails: ImageKitResponse?,
+    val profilePic: ImageKitResponse?,
     val yearOfStudy: Int?
 )
 
@@ -132,7 +132,7 @@ fun Volunteer.toResponse(): VolunteerResponse = VolunteerResponse(
     branch = this.branch,
     yearOfStudy = this.yearOfStudy,
     isActive = this.isActive,
-    profilePicDetails = ImageKitResponse.getFromString(this.profilePicDetails)
+    profilePic = ImageKitResponse.getFromString(this.profilePicDetails)
 )
 
 fun VolunteerResponse.toEntity(): Volunteer = Volunteer(
@@ -155,5 +155,5 @@ fun VolunteerResponse.toEntity(): Volunteer = Volunteer(
     branch = this.branch,
     yearOfStudy = this.yearOfStudy,
     isActive = this.isActive,
-    profilePicDetails = this.profilePicDetails?.convertToString()
+    profilePicDetails = this.profilePic?.convertToString()
 )
