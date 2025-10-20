@@ -122,7 +122,8 @@ class AttendanceService(
                 villageId = s.village.id,
                 villageName = s.village.name,
                 groupId = s.group.id,
-                groupName = s.group.name
+                groupName = s.group.name,
+                aid = it.id
             )
         }
         val presentVolunteers = volunteerRecords.map {
@@ -131,7 +132,8 @@ class AttendanceService(
                 pid = v.pid,
                 firstName = v.firstName,
                 lastName = v.lastName,
-                batch = v.batch
+                batch = v.batch,
+                aid = it.id
             )
         }
         return AttendanceReportResponse(
