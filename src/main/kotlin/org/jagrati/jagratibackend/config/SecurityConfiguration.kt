@@ -1,5 +1,6 @@
 package org.jagrati.jagratibackend.config
 
+import jakarta.servlet.http.HttpServletResponse
 import org.jagrati.jagratibackend.security.OAuth2SuccessHandler
 import org.jagrati.jagratibackend.services.UserService
 import org.springframework.beans.factory.annotation.Value
@@ -42,6 +43,14 @@ class SecurityConfiguration(
                 oauth2.authorizationEndpoint{it.baseUri("/oauth2/authorize")}
                 oauth2.authorizationEndpoint{it.baseUri("/oauth2/callback/*")}
                     .successHandler(successHandler)
+            }
+            .exceptionHandling { exceptions->
+                exceptions.authenticationEntryPoint { _, response, _ ->
+                    response.sendError(
+                        HttpServletResponse.SC_UNAUTHORIZED,
+                        "Unauthorized"
+                    )
+                }
             }
             .addFilterBefore(
                 jwtAuthenticationFilter,
