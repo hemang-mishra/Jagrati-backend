@@ -21,23 +21,27 @@ class JWTAuthenticationFilter(
         response: HttpServletResponse,
         filterChain: FilterChain
     ) {
-        val authHeader = request.getHeader("Authorization")
-        if(authHeader != null && authHeader.startsWith("Bearer ")){
-            val token = authHeader.substring(7) // Extract the token part after "Bearer "
-            if(jwtService.validateAccessToken(token)){
-                val pid = jwtService.getUserIdFromToken(token)
-                val user = userService.getUserById(pid)
-                if (user != null) {
-                    val authentication = UsernamePasswordAuthenticationToken(
-                        user,
-                        null, // credentials - null as we're using token authentication
-                        user.authorities
-                    )
-                    authentication.details = WebAuthenticationDetailsSource().buildDetails(request)
-                    SecurityContextHolder.getContext().authentication = authentication
+        try {
+            val authHeader = request.getHeader("Authorization")
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                val token = authHeader.substring(7) // Extract the token part after "Bearer "
+                if (jwtService.validateAccessToken(token)) {
+                    val pid = jwtService.getUserIdFromToken(token)
+                    val user = userService.getUserById(pid)
+                    if (user != null) {
+                        val authentication = UsernamePasswordAuthenticationToken(
+                            user,
+                            null, // credentials - null as we're using token authentication
+                            user.authorities
+                        )
+                        authentication.details = WebAuthenticationDetailsSource().buildDetails(request)
+                        SecurityContextHolder.getContext().authentication = authentication
+                    }
                 }
             }
+            filterChain.doFilter(request, response)
+        }catch (ex: Exception){
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")
         }
-        filterChain.doFilter(request, response)
     }
 }
