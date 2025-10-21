@@ -60,6 +60,11 @@ dependencies {
 
     implementation("org.springframework.boot:spring-boot-starter-webflux")
 
+    //Flyway
+    implementation("org.flywaydb:flyway-core:11.14.1")
+    implementation("org.flywaydb:flyway-database-postgresql:11.14.1")
+
+
 }
 
 kotlin {

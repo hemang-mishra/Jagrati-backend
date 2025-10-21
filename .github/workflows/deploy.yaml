@@ -76,4 +76,8 @@ jobs:
               -e SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${{secrets.POSTGRES_DB}} \
               -e SPRING_DATASOURCE_USERNAME=${{secrets.POSTGRES_USER}} \
               -e SPRING_DATASOURCE_PASSWORD=${{secrets.POSTGRES_PASSWORD}} \
+              -e ADMIN_MAIL=${{secrets.ADMIN_MAIL}} \
+              -e ADMIN_PASS=${{secrets.ADMIN_PASS}} \
+              -e MAIL_ID=${{secrets.MAIL_ID}} \
+              -e BASE_URL=${{secrets.BASE_URL}} \
               jagrati_app:latest

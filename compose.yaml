@@ -7,3 +7,8 @@ services:
       - 'POSTGRES_USER=${POSTGRES_USER}'
     ports:
       - '5432:5432'
+    volumes:
+      - jagrati_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  jagrati_postgres_data:

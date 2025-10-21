@@ -14,9 +14,7 @@ class JWTService(
     @Value("\${jwt.secret}") private val secret: String,
 ) {
     private val secretKey = Keys.hmacShaKeyFor(Base64.getDecoder().decode(secret))
-//    private val accessTokenValidity = 1000 * 60 * 15L // 15 minutes
-    //TODO: Remove this in production
-    private val accessTokenValidity = 1000 * 60 * 60 * 24 * 30L * 12//1 yr
+    private val accessTokenValidity = 1000 * 60 * 15L // 15 minutes
     val refreshTokenValidity = 1000 * 60 * 60 * 24 * 30L // 30 days
 
     private fun generateToken(

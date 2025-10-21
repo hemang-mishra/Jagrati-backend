@@ -50,8 +50,8 @@ class DataInitializationConfig(
     fun initializeDatabase() = CommandLineRunner {
         initializeRolesAndPermissions()
         initializeSuperAdmin()
-        // TODO: REMOVE IN PRODUCTION - Test data creation
-        createTestData()
+//         TODO: REMOVE IN PRODUCTION - Test data creation
+//        createTestData()
     }
 
     @Transactional
