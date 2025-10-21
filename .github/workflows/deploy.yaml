@@ -53,7 +53,7 @@ jobs:
               -e POSTGRES_DB=${{secrets.POSTGRES_DB}} \
               -e POSTGRES_USER=${{secrets.POSTGRES_USER}} \
               -e POSTGRES_PASSWORD=${{secrets.POSTGRES_PASSWORD}} \
-              -v jagrati_postgres_data:/var/lib/postgresql/jagrati_data \
+              -v jagrati_postgres_data:/var/lib/postgresql/data \
               -p 5432:5432 \
               postgres:latest
             # Wait for PostgreSQL to be ready
