@@ -50,7 +50,8 @@ data class PresentVolunteer(
     val aid: Long,
     val firstName: String,
     val lastName: String,
-    val batch: String?
+    val batch: String?,
+    val rollNo: String
 )
 
 data class AttendanceReportResponse(

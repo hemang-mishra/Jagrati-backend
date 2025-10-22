@@ -133,7 +133,8 @@ class AttendanceService(
                 firstName = v.firstName,
                 lastName = v.lastName,
                 batch = v.batch,
-                aid = it.id
+                aid = it.id,
+                rollNo = v.rollNumber ?: ""
             )
         }
         return AttendanceReportResponse(

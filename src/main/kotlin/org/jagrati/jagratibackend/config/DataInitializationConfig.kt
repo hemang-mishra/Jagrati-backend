@@ -229,6 +229,9 @@ class DataInitializationConfig(
 
                 // Syllabus permissions
                 AllPermissions.SYLLABUS_READ,
+
+                //Viewing roles
+                AllPermissions.ROLE_VIEW
             )
 
             volunteerPermissions.forEach { allPermission ->
