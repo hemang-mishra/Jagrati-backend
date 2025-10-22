@@ -3,6 +3,7 @@ package org.jagrati.jagratibackend.security
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.stereotype.Service
@@ -16,6 +17,7 @@ class JWTService(
     private val secretKey = Keys.hmacShaKeyFor(Base64.getDecoder().decode(secret))
     private val accessTokenValidity = 1000 * 60 * 15L // 15 minutes
     val refreshTokenValidity = 1000 * 60 * 60 * 24 * 30L // 30 days
+    private val logger = LoggerFactory.getLogger("JWT-Service")
 
     private fun generateToken(
         userDetails: UserDetails,
@@ -71,6 +73,8 @@ class JWTService(
 
     private fun isTokenExpired(token: String): Boolean {
         val claims = parseToken(token) ?: throw IllegalArgumentException("Invalid token")
+        if(claims.expiration.before(Date()))
+        logger.info("Token expiration time: ${claims.expiration}, Current time: ${Date()}. Token expired.")
         return claims.expiration.before(Date())
     }
 }

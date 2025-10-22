@@ -283,7 +283,7 @@ class AuthService(
                 id = 0,
                 email = email,
                 hashedRefreshToken = hashToken(rawRefreshToken),
-                expiresAt = Instant.now().plusSeconds(jwtService.refreshTokenValidity)
+                expiresAt = Instant.now().plusMillis(jwtService.refreshTokenValidity)
             )
         )
     }
