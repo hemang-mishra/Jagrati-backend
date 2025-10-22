@@ -158,16 +158,17 @@ class AttendanceService(
     }
 
     @Transactional(readOnly = true)
-    fun getStudentAttendanceByPid(pid: String): List<AttendanceRecordResponse> {
-        return studentAttendanceRepository.findByStudentIdPid(pid)
+    fun getStudentAttendanceByPid(pid: String): IndividualAttendanceHistory {
+        return IndividualAttendanceHistory(
+        studentAttendanceRepository.findByStudentIdPid(pid)
             .sortedByDescending { it.date }
-            .map { AttendanceRecordResponse(id = it.id, date = it.date.toString(), remarks = it.remarks) }
+            .map { AttendanceRecordResponse(id = it.id, date = it.date.toString(), remarks = it.remarks) })
     }
 
     @Transactional(readOnly = true)
-    fun getVolunteerAttendanceByPid(pid: String): List<AttendanceRecordResponse> {
-        return volunteerAttendanceRepository.findByVolunteerPidPid(pid)
+    fun getVolunteerAttendanceByPid(pid: String): IndividualAttendanceHistory {
+        return IndividualAttendanceHistory(volunteerAttendanceRepository.findByVolunteerPidPid(pid)
             .sortedByDescending { it.attendanceDate }
-            .map { AttendanceRecordResponse(id = it.id, date = it.attendanceDate.toString(), remarks = it.remarks) }
+            .map { AttendanceRecordResponse(id = it.id, date = it.attendanceDate.toString(), remarks = it.remarks) })
     }
 }

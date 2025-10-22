@@ -22,6 +22,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import org.jagrati.jagratibackend.dto.IndividualAttendanceHistory
 
 @RestController
 @RequestMapping("/api/attendance")
@@ -82,7 +83,7 @@ class AttendanceController(private val attendanceService: AttendanceService) {
     ])
     @RequiresPermission(AllPermissions.ATTENDANCE_READ)
     @GetMapping("/students/{pid}")
-    fun getStudentAttendance(@PathVariable pid: String): ResponseEntity<List<AttendanceRecordResponse>> =
+    fun getStudentAttendance(@PathVariable pid: String): ResponseEntity<IndividualAttendanceHistory> =
         ResponseEntity.ok(attendanceService.getStudentAttendanceByPid(pid))
 
     @Operation(summary = "Get a volunteer's attendance records")
@@ -91,7 +92,7 @@ class AttendanceController(private val attendanceService: AttendanceService) {
     ])
     @RequiresPermission(AllPermissions.ATTENDANCE_READ)
     @GetMapping("/volunteers/{pid}")
-    fun getVolunteerAttendance(@PathVariable pid: String): ResponseEntity<List<AttendanceRecordResponse>> =
+    fun getVolunteerAttendance(@PathVariable pid: String): ResponseEntity<IndividualAttendanceHistory> =
         ResponseEntity.ok(attendanceService.getVolunteerAttendanceByPid(pid))
 }
 
