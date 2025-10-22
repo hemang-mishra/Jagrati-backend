@@ -61,3 +61,6 @@ data class AttendanceReportResponse(
     val presentVolunteers: List<PresentVolunteer>
 )
 
+data class IndividualAttendanceHistory(
+    val attendees: List<AttendanceRecordResponse>,
+)
