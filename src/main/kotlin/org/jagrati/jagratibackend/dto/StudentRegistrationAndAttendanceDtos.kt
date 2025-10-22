@@ -44,3 +44,7 @@ data class StudentGroupHistoryResponse(
     val assignedByPid: String,
     val assignedAt: String
 )
+
+data class StudentGroupHistoryListResponse(
+    val history: List<StudentGroupHistoryResponse>
+)

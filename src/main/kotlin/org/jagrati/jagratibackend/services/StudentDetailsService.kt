@@ -1,5 +1,6 @@
 package org.jagrati.jagratibackend.services
 
+import org.jagrati.jagratibackend.dto.StudentGroupHistoryListResponse
 import org.jagrati.jagratibackend.dto.StudentRequest
 import org.jagrati.jagratibackend.dto.UpdateStudentRequest
 import org.jagrati.jagratibackend.dto.StudentGroupHistoryResponse
@@ -100,10 +101,10 @@ class StudentDetailsService(
         }
     }
 
-    fun getGroupTransitions(pid: String): List<StudentGroupHistoryResponse> {
+    fun getGroupTransitions(pid: String): StudentGroupHistoryListResponse {
         val records = studentGroupHistoryRepository.findByStudentPidOrderByAssignedAtDesc(pid)
         val fmt = DateTimeFormatter.ISO_LOCAL_DATE_TIME
-        return records.map {
+        return StudentGroupHistoryListResponse(records.map {
             StudentGroupHistoryResponse(
                 id = it.id,
                 oldGroupId = it.fromGroup?.id,
@@ -113,7 +114,7 @@ class StudentDetailsService(
                 assignedByPid = it.assignedBy.pid,
                 assignedAt = it.assignedAt.format(fmt)
             )
-        }
+        })
     }
 
     fun getAllStudents(): List<StudentResponse> {

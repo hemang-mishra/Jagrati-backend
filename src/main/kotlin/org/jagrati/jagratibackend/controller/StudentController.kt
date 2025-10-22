@@ -19,6 +19,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import org.jagrati.jagratibackend.dto.StudentGroupHistoryListResponse
 import org.jagrati.jagratibackend.entities.enums.AllPermissions
 import org.jagrati.jagratibackend.security.RequiresPermission
 
@@ -56,7 +57,7 @@ class StudentController(
     ])
     @RequiresPermission(AllPermissions.STUDENT_READ)
     @GetMapping("/{pid}/group-history")
-    fun getGroupHistory(@PathVariable pid: String): ResponseEntity<List<StudentGroupHistoryResponse>> =
+    fun getGroupHistory(@PathVariable pid: String): ResponseEntity<StudentGroupHistoryListResponse> =
         ResponseEntity.ok(studentDetailsService.getGroupTransitions(pid))
 
     @Operation(summary = "List all students")
