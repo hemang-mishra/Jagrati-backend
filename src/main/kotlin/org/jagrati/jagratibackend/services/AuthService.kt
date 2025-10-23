@@ -104,6 +104,8 @@ class AuthService(
         val userId = jwtService.getUserIdFromToken(refreshToken)
         val user = userService.getUserById(userId) ?: throw BadCredentialsException("Invalid refresh token.")
         val hashedRefreshToken = hashToken(refreshToken)
+        //TODO logging for better monitoring, will remove sensitive info later
+        logger.info("Hashed refresh token: $hashedRefreshToken User email: ${user.email}")
         refreshTokenRepository.findByEmailAndHashedRefreshToken(user.email, hashedRefreshToken)
             ?: throw IllegalArgumentException("Refresh token not recognized (maybe used expired?)")
         refreshTokenRepository.deleteByEmailAndHashedRefreshToken(user.email, hashedRefreshToken)
