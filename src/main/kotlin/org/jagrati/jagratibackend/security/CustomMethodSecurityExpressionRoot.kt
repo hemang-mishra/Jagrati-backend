@@ -19,9 +19,9 @@ class CustomMethodSecurityExpressionRoot(
 
     fun hasPermission(permissionName: String): Boolean {
         if(!authentication.isAuthenticated) return false
-        logger.info("Checking permission $permissionName")
+//        logger.info("Checking permission $permissionName")
         authentication.authorities.forEach {
-            logger.info("Authority $it")
+//            logger.info("Authority $it")
         }
         val roles = authentication.authorities
             .map { (it as GrantedAuthority).authority}
