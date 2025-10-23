@@ -45,27 +45,88 @@ jobs:
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # Start or restart PostgreSQL container
-            docker stop jagrati_postgres || true
-            docker rm jagrati_postgres || true
+            set -e
+            
+            echo "Starting deployment on $(hostname)"
+            
+            # Stop and remove old postgres container if exists
+            docker stop jagrati_postgres 2>/dev/null || true
+            docker rm jagrati_postgres 2>/dev/null || true
+            
+            # Pull latest postgres image
+            docker pull postgres:18
+            
+            # Start PostgreSQL container
+            echo "Starting PostgreSQL container..."
             docker run -d \
               --name jagrati_postgres \
+              --restart unless-stopped \
               -e POSTGRES_DB=${{secrets.POSTGRES_DB}} \
               -e POSTGRES_USER=${{secrets.POSTGRES_USER}} \
               -e POSTGRES_PASSWORD=${{secrets.POSTGRES_PASSWORD}} \
               -v jagrati_postgres_data:/var/lib/postgresql/data \
               -p 5432:5432 \
               postgres:18
-            # Wait for PostgreSQL to be ready
-            until docker exec jagrati_postgres pg_isready -U ${{secrets.POSTGRES_USER}}; do sleep 2; done
+            
+            # Wait for container to be in running state (up to 60 seconds)
+            echo "Waiting for PostgreSQL container to start..."
+            COUNTER=0
+            until [ $COUNTER -eq 30 ]; do
+              if docker ps --filter "name=jagrati_postgres" --filter "status=running" -q | grep -q .; then
+                echo "PostgreSQL container is running"
+                break
+              fi
+              echo "Waiting for container to be running... ($COUNTER/30)"
+              sleep 2
+              COUNTER=$((COUNTER + 1))
+            done
+            
+            # Check if container is running, if not show logs and exit
+            if ! docker ps --filter "name=jagrati_postgres" --filter "status=running" -q | grep -q .; then
+              echo "ERROR: PostgreSQL container failed to start!"
+              echo "Container status:"
+              docker ps -a --filter "name=jagrati_postgres"
+              echo "Container logs:"
+              docker logs jagrati_postgres 2>&1 || true
+              exit 1
+            fi
+            
+            # Wait for PostgreSQL to accept connections
+            echo "Waiting for PostgreSQL to accept connections..."
+            COUNTER=0
+            until [ $COUNTER -eq 30 ]; do
+              if docker exec jagrati_postgres pg_isready -U ${{secrets.POSTGRES_USER}} >/dev/null 2>&1; then
+                echo "PostgreSQL is ready to accept connections"
+                break
+              fi
+              echo "Waiting for PostgreSQL... ($COUNTER/30)"
+              sleep 2
+              COUNTER=$((COUNTER + 1))
+            done
+            
+            # Final check
+            if ! docker exec jagrati_postgres pg_isready -U ${{secrets.POSTGRES_USER}} >/dev/null 2>&1; then
+              echo "ERROR: PostgreSQL is not accepting connections!"
+              docker logs jagrati_postgres 2>&1 || true
+              exit 1
+            fi
+            
+            echo "PostgreSQL is fully ready"
+            
             # Load and run app
+            echo "Loading application image..."
             docker load -i ~/jagrati_app.tar
-            docker stop jagrati_app || true
-            docker rm jagrati_app || true
+            
+            echo "Stopping old application containers..."
+            docker stop jagrati_app 2>/dev/null || true
+            docker rm jagrati_app 2>/dev/null || true
             docker ps -q --filter "publish=8080" | xargs -r docker stop
             docker ps -a -q --filter "publish=8080" | xargs -r docker rm
+            
+            echo "Starting application container..."
             docker run -d \
               --name jagrati_app \
+              --restart unless-stopped \
               --link jagrati_postgres:postgres \
               -p 8080:8080 \
               -e JWT_SECRET_BASE_64=${{secrets.JWT_SECRET_BASE_64}} \
@@ -81,3 +142,6 @@ jobs:
               -e MAIL_ID=${{secrets.MAIL_ID}} \
               -e BASE_URL=${{secrets.BASE_URL}} \
               jagrati_app:latest
+            
+            echo "Deployment completed successfully!"
+            docker ps --filter "name=jagrati_"
