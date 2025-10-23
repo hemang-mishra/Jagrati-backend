@@ -55,7 +55,7 @@ jobs:
               -e POSTGRES_PASSWORD=${{secrets.POSTGRES_PASSWORD}} \
               -v jagrati_postgres_data:/var/lib/postgresql/data \
               -p 5432:5432 \
-              postgres:latest
+              postgres:18
             # Wait for PostgreSQL to be ready
             until docker exec jagrati_postgres pg_isready -U ${{secrets.POSTGRES_USER}}; do sleep 2; done
             # Load and run app

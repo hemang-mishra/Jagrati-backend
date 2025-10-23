@@ -26,7 +26,7 @@ class EmailService(
     private val logger = LoggerFactory.getLogger(EmailService::class.java)
 
     fun sendVerificationEmail(email: String, token: String, userName: String? = null) {
-        val subject = "$appName: Verify Your Email - Join Our Mission to Educate Children"
+        val subject = "Welcome to $appName - Verify Your Email"
         val verificationUrl = "$baseUrl/auth/verify-email?token=$token"
 
         val content = buildVerificationEmailContent(
