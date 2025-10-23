@@ -64,6 +64,10 @@ dependencies {
     implementation("org.flywaydb:flyway-core:11.14.1")
     implementation("org.flywaydb:flyway-database-postgresql:11.14.1")
 
+    //For throttling
+
+    implementation("com.bucket4j:bucket4j_jdk17-core:8.15.0")
+
 
 }
 
