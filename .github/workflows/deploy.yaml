@@ -113,35 +113,53 @@ jobs:
             
             echo "PostgreSQL is fully ready"
             
-            # Load and run app
-            echo "Loading application image..."
-            docker load -i ~/jagrati_app.tar
-            
+            # Stop old application containers first
             echo "Stopping old application containers..."
             docker stop jagrati_app 2>/dev/null || true
             docker rm jagrati_app 2>/dev/null || true
-            docker ps -q --filter "publish=8080" | xargs -r docker stop
-            docker ps -a -q --filter "publish=8080" | xargs -r docker rm
+            docker ps -q --filter "publish=8080" | xargs -r docker stop 2>/dev/null || true
+            docker ps -a -q --filter "publish=8080" | xargs -r docker rm 2>/dev/null || true
             
+            # Load application image
+            echo "Loading application image..."
+            docker load -i ~/jagrati_app.tar
+            
+            # Verify the image was loaded
+            echo "Verifying image..."
+            docker images jagrati_app:latest
+            
+            # Clean up the tar file
+            rm -f ~/jagrati_app.tar
+            
+            # Start application container
             echo "Starting application container..."
             docker run -d \
               --name jagrati_app \
               --restart unless-stopped \
               --link jagrati_postgres:postgres \
               -p 8080:8080 \
-              -e JWT_SECRET_BASE_64=${{secrets.JWT_SECRET_BASE_64}} \
-              -e IMAGE_KIT_PRIVATE_KEY=${{secrets.IMAGE_KIT_PRIVATE_KEY}} \
-              -e OAUTH2_CLIENT_ID=${{secrets.OAUTH2_CLIENT_ID}} \
-              -e OAUTH2_SECRET=${{secrets.OAUTH2_SECRET}} \
-              -e GMAIL_PASS=${{secrets.GMAIL_PASS}} \
-              -e SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${{secrets.POSTGRES_DB}} \
-              -e SPRING_DATASOURCE_USERNAME=${{secrets.POSTGRES_USER}} \
-              -e SPRING_DATASOURCE_PASSWORD=${{secrets.POSTGRES_PASSWORD}} \
-              -e ADMIN_MAIL=${{secrets.ADMIN_MAIL}} \
-              -e ADMIN_PASS=${{secrets.ADMIN_PASS}} \
-              -e MAIL_ID=${{secrets.MAIL_ID}} \
-              -e BASE_URL=${{secrets.BASE_URL}} \
+              -e "JWT_SECRET_BASE_64=${{secrets.JWT_SECRET_BASE_64}}" \
+              -e "IMAGE_KIT_PRIVATE_KEY=${{secrets.IMAGE_KIT_PRIVATE_KEY}}" \
+              -e "OAUTH2_CLIENT_ID=${{secrets.OAUTH2_CLIENT_ID}}" \
+              -e "OAUTH2_SECRET=${{secrets.OAUTH2_SECRET}}" \
+              -e "GMAIL_PASS=${{secrets.GMAIL_PASS}}" \
+              -e "SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${{secrets.POSTGRES_DB}}" \
+              -e "SPRING_DATASOURCE_USERNAME=${{secrets.POSTGRES_USER}}" \
+              -e "SPRING_DATASOURCE_PASSWORD=${{secrets.POSTGRES_PASSWORD}}" \
+              -e "ADMIN_MAIL=${{secrets.ADMIN_MAIL}}" \
+              -e "ADMIN_PASS=${{secrets.ADMIN_PASS}}" \
+              -e "MAIL_ID=${{secrets.MAIL_ID}}" \
+              -e "BASE_URL=${{secrets.BASE_URL}}" \
               jagrati_app:latest
             
+            # Wait for app to start
+            echo "Waiting for application to start..."
+            sleep 5
+            
+            # Show running containers
             echo "Deployment completed successfully!"
             docker ps --filter "name=jagrati_"
+            
+            # Show app logs (last 20 lines)
+            echo "Application logs:"
+            docker logs --tail 20 jagrati_app
