@@ -71,7 +71,7 @@ class AuthController(
     fun login(
         @RequestBody body: LoginRequest
     ): ResponseEntity<AuthService.TokenPair> {
-        val tokenPair = authService.login(body.email, body.password)
+        val tokenPair = authService.login(body.email, body.password, body.deviceToken)
         return ResponseEntity(tokenPair, HttpStatus.OK)
     }
 
@@ -180,7 +180,7 @@ class AuthController(
     )
     @PostMapping("/google")
     fun googleLogin(@RequestBody request: GoogleLoginRequest): ResponseEntity<AuthService.TokenPair> {
-        val tokenPair = authService.loginWithGoogle(request.idToken)
+        val tokenPair = authService.loginWithGoogle(request.idToken, request.deviceToken)
         return ResponseEntity(tokenPair, HttpStatus.OK)
     }
 }

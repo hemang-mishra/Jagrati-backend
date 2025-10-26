@@ -10,19 +10,18 @@ import MyVolunteerRequestResponse
 import RejectVolunteerRequest
 import UserSummaryDTO
 import VolunteerRequestActionResponse
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jagrati.jagratibackend.config.InitialRoles
-import org.jagrati.jagratibackend.entities.ImageKitResponse
 import org.jagrati.jagratibackend.entities.User
 import org.jagrati.jagratibackend.entities.UserRole
 import org.jagrati.jagratibackend.entities.Volunteer
 import org.jagrati.jagratibackend.entities.VolunteerRequest
+import org.jagrati.jagratibackend.entities.enums.AllPermissions
 import org.jagrati.jagratibackend.entities.enums.Gender
 import org.jagrati.jagratibackend.entities.enums.RequestStatus
-import org.jagrati.jagratibackend.repository.RoleRepository
-import org.jagrati.jagratibackend.repository.UserRepository
-import org.jagrati.jagratibackend.repository.UserRoleRepository
-import org.jagrati.jagratibackend.repository.VolunteerRepository
-import org.jagrati.jagratibackend.repository.VolunteerRequestRepository
+import org.jagrati.jagratibackend.repository.*
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -35,7 +34,11 @@ class VolunteerRequestService(
     private val userRoleRepository: UserRoleRepository,
     private val roleRepository: RoleRepository,
     private val userRepository: UserRepository,
-    private val volunteerRepository: VolunteerRepository
+    private val volunteerRepository: VolunteerRepository,
+    private val fcmTokensRepository: FCMTokensRepository,
+    private val rolePermissionRepository: RolePermissionRepository,
+    private val permissionRepository: PermissionRepository,
+    private val fcmService: FCMService
 ) {
     @Transactional
     fun createVolunteerRequest(request: CreateVolunteerRequest, userPid: String): VolunteerRequestActionResponse {
@@ -79,6 +82,27 @@ class VolunteerRequestService(
         )
 
         val savedRequest = volunteerRequestRepository.save(volunteerRequest)
+
+        //Send notifications to people who can approve the request
+        val permission = permissionRepository.findByName(AllPermissions.VOLUNTEER_REQUEST_APPROVE.name) ?: throw IllegalStateException("Permission not found")
+        val roles = rolePermissionRepository.findByPermission(permission = permission)
+        val users = mutableListOf<User>()
+        roles.forEach { rolePermission ->
+            users.addAll(userRoleRepository.findByRole(rolePermission.role).map { it.user })
+        }
+        val tokens = mutableListOf<String>()
+        users.forEach { user->
+            fcmTokensRepository.findByUser(user).forEach { fcmToken ->
+                tokens.add(fcmToken.deviceId)
+            }
+        }
+        CoroutineScope(Dispatchers.IO).launch {
+            fcmService.sendNotificationToMultipleDevices(tokens,
+                "New Volunteer Request",
+                "${request.firstName} ${request.lastName} (${request.rollNumber}) wants to join as volunteer!!",
+                )
+        }
+
         return VolunteerRequestActionResponse(savedRequest.id, savedRequest.status.name, "Volunteer request submitted successfully")
     }
 
@@ -110,6 +134,18 @@ class VolunteerRequestService(
                 role = volunteerRole,
                 assignedBy = approvedBy
             ))
+        }
+
+        //Send notification
+        val tokens = getDeviceTokensForUser(volunteerRequest.requestedBy)
+        if(tokens.isNotEmpty()){
+            CoroutineScope(Dispatchers.IO).launch {
+                fcmService.sendNotificationToMultipleDevices(
+                    tokens,
+                    "Congratulations, you are now a volunteer!!",
+                    "Your volunteer request has been approved by ${approvedBy.firstName}."
+                )
+            }
         }
 
         //Save volunteer details in the table
@@ -147,6 +183,19 @@ class VolunteerRequestService(
         volunteerRequest.reviewedAt = LocalDateTime.now()
         volunteerRequest.reason = request.reason
         volunteerRequestRepository.save(volunteerRequest)
+
+        //Send notification
+        val tokens = getDeviceTokensForUser(volunteerRequest.requestedBy)
+        if(tokens.isNotEmpty()){
+            CoroutineScope(Dispatchers.IO).launch {
+                fcmService.sendNotificationToMultipleDevices(
+                    tokens,
+                    "Volunteer Request Rejected",
+                    "Your volunteer request has been rejected. Reason: ${request.reason}"
+                )
+            }
+        }
+
         return VolunteerRequestActionResponse(volunteerRequest.id, volunteerRequest.status.name, "Request rejected")
     }
 
@@ -213,5 +262,13 @@ class VolunteerRequestService(
             email = user.email,
             profileImageUrl = user.profilePictureUrl
         )
+    }
+
+    private fun getDeviceTokensForUser(user: User): List<String> {
+        val tokens = mutableListOf<String>()
+        fcmTokensRepository.findByUser(user).forEach { fcmToken ->
+            tokens.add(fcmToken.deviceId)
+        }
+        return tokens
     }
 }
