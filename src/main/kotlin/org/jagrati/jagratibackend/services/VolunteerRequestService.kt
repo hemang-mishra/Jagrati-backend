@@ -22,6 +22,7 @@ import org.jagrati.jagratibackend.entities.enums.AllPermissions
 import org.jagrati.jagratibackend.entities.enums.Gender
 import org.jagrati.jagratibackend.entities.enums.RequestStatus
 import org.jagrati.jagratibackend.repository.*
+import org.jagrati.jagratibackend.utils.NotificationContent
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -97,10 +98,10 @@ class VolunteerRequestService(
             }
         }
         CoroutineScope(Dispatchers.IO).launch {
-            fcmService.sendNotificationToMultipleDevices(tokens,
-                "New Volunteer Request",
-                "${request.firstName} ${request.lastName} (${request.rollNumber}) wants to join as volunteer!!",
-                )
+            val newVolunteerContent = NotificationContent.getNewVolunteeringRequestContent(
+                request.firstName, request.lastName, request.rollNumber
+            )
+            fcmService.sendNotificationToMultipleDevices(tokens,newVolunteerContent.first, newVolunteerContent.second)
         }
 
         return VolunteerRequestActionResponse(savedRequest.id, savedRequest.status.name, "Volunteer request submitted successfully")
@@ -140,10 +141,11 @@ class VolunteerRequestService(
         val tokens = getDeviceTokensForUser(volunteerRequest.requestedBy)
         if(tokens.isNotEmpty()){
             CoroutineScope(Dispatchers.IO).launch {
+                val content = NotificationContent.getVolunteeringRequestAcceptedContent(approvedBy.firstName)
                 fcmService.sendNotificationToMultipleDevices(
                     tokens,
-                    "Congratulations, you are now a volunteer!!",
-                    "Your volunteer request has been approved by ${approvedBy.firstName}."
+                    content.first,
+                    content.second
                 )
             }
         }
@@ -188,10 +190,11 @@ class VolunteerRequestService(
         val tokens = getDeviceTokensForUser(volunteerRequest.requestedBy)
         if(tokens.isNotEmpty()){
             CoroutineScope(Dispatchers.IO).launch {
+                val content = NotificationContent.getVolunteeringRequestRejectedContent(request.reason ?: "Unknown reason")
                 fcmService.sendNotificationToMultipleDevices(
                     tokens,
-                    "Volunteer Request Rejected",
-                    "Your volunteer request has been rejected. Reason: ${request.reason}"
+                    content.first,
+                    content.second
                 )
             }
         }
