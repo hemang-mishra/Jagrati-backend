@@ -20,6 +20,7 @@ import org.jagrati.jagratibackend.repository.RefreshTokenRepository
 import org.jagrati.jagratibackend.security.HashEncoder
 import org.jagrati.jagratibackend.security.JWTService
 import org.jagrati.jagratibackend.utils.PidGenerator
+import org.jagrati.jagratibackend.utils.SecurityUtils
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.authentication.BadCredentialsException
@@ -89,7 +90,7 @@ class AuthService(
     }
 
     @Transactional
-    fun login(email: String, password: String, deviceId: String): TokenPair {
+    fun login(email: String, password: String, deviceId: String?): TokenPair {
         val user = userService.getUserByEmail(email) ?: throw BadCredentialsException("Invalid credentials.")
         if (!hashEncoder.matches(password, user.passwordHash)) {
             throw BadCredentialsException("Invalid credentials.")
@@ -101,14 +102,16 @@ class AuthService(
         val newRefreshToken = jwtService.generateRefreshToken(user)
         storeRefreshToken(email, newRefreshToken)
 
-        //Managing the device token for FCM
-        handleDeviceToken(deviceId, user)
+        if(deviceId != null) {
+            //Managing the device token for FCM
+            handleDeviceToken(deviceId, user)
+        }
 
         return TokenPair(newAccessToken, newRefreshToken)
     }
 
     @Transactional
-    fun refresh(refreshToken: String): TokenPair {
+    fun refresh(refreshToken: String, deviceToken: String?): TokenPair {
         if (!jwtService.validateRefreshToken(refreshToken)) {
             throw IllegalStateException("Invalid refresh token format.")
         }
@@ -121,6 +124,12 @@ class AuthService(
         val newRefreshToken = jwtService.generateRefreshToken(user)
         val accessToken = jwtService.generateAccessToken(user)
         storeRefreshToken(user.email, newRefreshToken)
+
+        //Handling device token if any
+        if(deviceToken != null){
+            handleDeviceToken(deviceToken, user)
+        }
+
         return TokenPair(accessToken, newRefreshToken)
     }
 
@@ -287,6 +296,14 @@ class AuthService(
             }
         }
         return user
+    }
+
+    fun logout(deviceToken: String){
+        val currentUser = SecurityUtils.getCurrentUser() ?: throw IllegalArgumentException("No current user")
+        val existing = fcmTokensRepository.findByDeviceId(deviceToken)
+        if (existing != null && existing.user.pid == currentUser.pid){
+            fcmTokensRepository.delete(existing)
+        }
     }
 
     private fun storeRefreshToken(email: String, rawRefreshToken: String) {
