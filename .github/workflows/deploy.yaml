@@ -150,6 +150,7 @@ jobs:
               -e "ADMIN_PASS=${{secrets.ADMIN_PASS}}" \
               -e "MAIL_ID=${{secrets.MAIL_ID}}" \
               -e "BASE_URL=${{secrets.BASE_URL}}" \
+              -e "FIREBASE_CREDENTIALS_BASE64=${{secrets.FIREBASE_CREDENTIALS_BASE64}}" \
               jagrati_app:latest
             
             # Wait for app to start
