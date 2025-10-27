@@ -5,16 +5,22 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.gson.GsonFactory
 import jakarta.transaction.Transactional
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jagrati.jagratibackend.entities.EmailVerificationToken
+import org.jagrati.jagratibackend.entities.FCMTokens
 import org.jagrati.jagratibackend.entities.PasswordResetToken
 import org.jagrati.jagratibackend.entities.RefreshTokens
 import org.jagrati.jagratibackend.entities.User
 import org.jagrati.jagratibackend.repository.EmailVerificationTokenRepository
+import org.jagrati.jagratibackend.repository.FCMTokensRepository
 import org.jagrati.jagratibackend.repository.PasswordResetTokenRepository
 import org.jagrati.jagratibackend.repository.RefreshTokenRepository
 import org.jagrati.jagratibackend.security.HashEncoder
 import org.jagrati.jagratibackend.security.JWTService
 import org.jagrati.jagratibackend.utils.PidGenerator
+import org.jagrati.jagratibackend.utils.SecurityUtils
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.authentication.BadCredentialsException
@@ -36,7 +42,8 @@ class AuthService(
     private val emailService: EmailService,
     private val passwordResetTokenRepository: PasswordResetTokenRepository,
     @param:Value("\${spring.security.oauth2.client.registration.google.client-id}")
-    private val googleClientId: String
+    private val googleClientId: String,
+    private val fcmTokensRepository: FCMTokensRepository,
 ) {
     private val logger = LoggerFactory.getLogger(AuthService::class.java)
     data class TokenPair(
@@ -82,7 +89,8 @@ class AuthService(
         return userService.saveUser(newUser)
     }
 
-    fun login(email: String, password: String): TokenPair {
+    @Transactional
+    fun login(email: String, password: String, deviceId: String?): TokenPair {
         val user = userService.getUserByEmail(email) ?: throw BadCredentialsException("Invalid credentials.")
         if (!hashEncoder.matches(password, user.passwordHash)) {
             throw BadCredentialsException("Invalid credentials.")
@@ -93,11 +101,17 @@ class AuthService(
         val newAccessToken = jwtService.generateAccessToken(user)
         val newRefreshToken = jwtService.generateRefreshToken(user)
         storeRefreshToken(email, newRefreshToken)
+
+        if(deviceId != null) {
+            //Managing the device token for FCM
+            handleDeviceToken(deviceId, user)
+        }
+
         return TokenPair(newAccessToken, newRefreshToken)
     }
 
     @Transactional
-    fun refresh(refreshToken: String): TokenPair {
+    fun refresh(refreshToken: String, deviceToken: String?): TokenPair {
         if (!jwtService.validateRefreshToken(refreshToken)) {
             throw IllegalStateException("Invalid refresh token format.")
         }
@@ -110,6 +124,12 @@ class AuthService(
         val newRefreshToken = jwtService.generateRefreshToken(user)
         val accessToken = jwtService.generateAccessToken(user)
         storeRefreshToken(user.email, newRefreshToken)
+
+        //Handling device token if any
+        if(deviceToken != null){
+            handleDeviceToken(deviceToken, user)
+        }
+
         return TokenPair(accessToken, newRefreshToken)
     }
 
@@ -228,7 +248,7 @@ class AuthService(
         return true
     }
 
-    fun loginWithGoogle(idTokenString: String): TokenPair{
+    fun loginWithGoogle(idTokenString: String, deviceToken: String): TokenPair{
         val verifier = GoogleIdTokenVerifier.Builder(NetHttpTransport(), GsonFactory.getDefaultInstance())
             .setAudience(Collections.singleton(googleClientId))
             .build()
@@ -246,6 +266,7 @@ class AuthService(
         val accessToken = jwtService.generateAccessToken(user)
         val refreshToken = jwtService.generateRefreshToken(user)
         storeRefreshToken(user.email, refreshToken)
+        handleDeviceToken(deviceToken, user)
         return TokenPair(accessToken, refreshToken)
     }
 
@@ -277,6 +298,14 @@ class AuthService(
         return user
     }
 
+    fun logout(deviceToken: String){
+        val currentUser = SecurityUtils.getCurrentUser() ?: throw IllegalArgumentException("No current user")
+        val existing = fcmTokensRepository.findByDeviceId(deviceToken)
+        if (existing != null && existing.user.pid == currentUser.pid){
+            fcmTokensRepository.delete(existing)
+        }
+    }
+
     private fun storeRefreshToken(email: String, rawRefreshToken: String) {
         refreshTokenRepository.save(
             RefreshTokens(
@@ -292,5 +321,15 @@ class AuthService(
         val digest = MessageDigest.getInstance("SHA-256")
         val hashBytes = digest.digest(token.encodeToByteArray())
         return Base64.getEncoder().encodeToString(hashBytes)
+    }
+
+
+    private fun handleDeviceToken(deviceToken: String, user: User) {
+        val existing = fcmTokensRepository.findByDeviceId(deviceToken)
+        if (existing != null){
+            fcmTokensRepository.delete(existing)
+            fcmTokensRepository.flush()
+        }
+        fcmTokensRepository.save(FCMTokens(deviceId = deviceToken, user = user))
     }
 }

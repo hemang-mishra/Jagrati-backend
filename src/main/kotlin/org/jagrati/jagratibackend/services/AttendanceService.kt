@@ -1,12 +1,18 @@
 package org.jagrati.jagratibackend.services
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jagrati.jagratibackend.dto.*
 import org.jagrati.jagratibackend.entities.StudentAttendance
 import org.jagrati.jagratibackend.entities.VolunteerAttendance
+import org.jagrati.jagratibackend.repository.FCMTokensRepository
 import org.jagrati.jagratibackend.repository.StudentAttendanceRepository
 import org.jagrati.jagratibackend.repository.StudentRepository
+import org.jagrati.jagratibackend.repository.UserRepository
 import org.jagrati.jagratibackend.repository.VolunteerAttendanceRepository
 import org.jagrati.jagratibackend.repository.VolunteerRepository
+import org.jagrati.jagratibackend.utils.NotificationContent
 import org.jagrati.jagratibackend.utils.SecurityUtils
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Service
@@ -18,7 +24,10 @@ class AttendanceService(
     private val studentRepository: StudentRepository,
     private val studentAttendanceRepository: StudentAttendanceRepository,
     private val volunteerRepository: VolunteerRepository,
-    private val volunteerAttendanceRepository: VolunteerAttendanceRepository
+    private val volunteerAttendanceRepository: VolunteerAttendanceRepository,
+    private val fcmTokenRepository: FCMTokensRepository,
+    private val fcmService: FCMService,
+    private val userRepository: UserRepository
 ) {
     @Transactional
     fun markStudentAttendanceBulk(request: BulkAttendanceRequest): BulkAttendanceResultResponse {
@@ -82,6 +91,15 @@ class AttendanceService(
                     inserted += 1
                 } catch (ex: DataIntegrityViolationException) {
                     skippedExisting += 1
+                }
+            }
+            val user = userRepository.findByPid(v.pid)
+            if (user != null) {
+                val tokens = fcmTokenRepository.findByUser(user).map { it.deviceId }
+                if (tokens.isNotEmpty()) {
+                    CoroutineScope(Dispatchers.IO).launch {
+                        fcmService.sendNotificationToMultipleDevices(tokens, NotificationContent.APPRECIATION_FOR_VOLUNTEERING.title, NotificationContent.APPRECIATION_FOR_VOLUNTEERING.description)
+                    }
                 }
             }
         }

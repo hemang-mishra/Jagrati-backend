@@ -68,6 +68,15 @@ dependencies {
 
     implementation("com.bucket4j:bucket4j_jdk17-core:8.15.0")
 
+    //FCM
+    implementation("com.google.firebase:firebase-admin:9.7.0")
+
+    //Coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.9.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.9.0")
+
+
 
 }
 

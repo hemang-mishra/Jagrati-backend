@@ -71,7 +71,7 @@ class AuthController(
     fun login(
         @RequestBody body: LoginRequest
     ): ResponseEntity<AuthService.TokenPair> {
-        val tokenPair = authService.login(body.email, body.password)
+        val tokenPair = authService.login(body.email, body.password, body.deviceToken)
         return ResponseEntity(tokenPair, HttpStatus.OK)
     }
 
@@ -94,7 +94,7 @@ class AuthController(
     fun refresh(
         @RequestBody body: RefreshRequest
     ): ResponseEntity<AuthService.TokenPair> {
-        val tokenPair = authService.refresh(body.refreshToken)
+        val tokenPair = authService.refresh(body.refreshToken, body.deviceToken)
         return ResponseEntity(tokenPair, HttpStatus.OK)
     }
 
@@ -180,7 +180,30 @@ class AuthController(
     )
     @PostMapping("/google")
     fun googleLogin(@RequestBody request: GoogleLoginRequest): ResponseEntity<AuthService.TokenPair> {
-        val tokenPair = authService.loginWithGoogle(request.idToken)
+        val tokenPair = authService.loginWithGoogle(request.idToken, request.deviceToken)
         return ResponseEntity(tokenPair, HttpStatus.OK)
     }
+
+    @Operation(
+        summary = "Logout user", description = "Logs out the user by invalidating the refresh token."
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200", description = "Logout successful", content = [Content(
+                    mediaType = "application/json", schema = Schema(implementation = MessageResponse::class)
+                )]
+            ), ApiResponse(
+                responseCode = "400", description = "Invalid request", content = [Content(
+                    mediaType = "application/json", schema = Schema(implementation = MessageResponse::class)
+                )]
+            )
+        ]
+    )
+    @PostMapping("/logout")
+    fun  logOut(@RequestBody message: StringRequest): ResponseEntity<MessageResponse> {
+        authService.logout(message.value)
+        return ResponseEntity.ok(MessageResponse("Logout successful"))
+    }
+
 }
