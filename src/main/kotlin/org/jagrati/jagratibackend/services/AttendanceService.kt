@@ -89,13 +89,13 @@ class AttendanceService(
                         )
                     )
                     inserted += 1
+                    val user = userRepository.findByPid(v.pid)
+                    if (user != null) {
+                        fcmService.sendNotificationToMultipleDevices(listOf(user), NotificationContent.APPRECIATION_FOR_VOLUNTEERING)
+                    }
                 } catch (ex: DataIntegrityViolationException) {
                     skippedExisting += 1
                 }
-            }
-            val user = userRepository.findByPid(v.pid)
-            if (user != null) {
-                fcmService.sendNotificationToMultipleDevices(listOf(user), NotificationContent.APPRECIATION_FOR_VOLUNTEERING)
             }
         }
         return BulkAttendanceResultResponse(
