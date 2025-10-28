@@ -85,26 +85,25 @@ class VolunteerRequestService(
         val savedRequest = volunteerRequestRepository.save(volunteerRequest)
 
         //Send notifications to people who can approve the request
-        val permission = permissionRepository.findByName(AllPermissions.VOLUNTEER_REQUEST_APPROVE.name) ?: throw IllegalStateException("Permission not found")
+        val permission = permissionRepository.findByName(AllPermissions.VOLUNTEER_REQUEST_APPROVE.name)
+            ?: throw IllegalStateException("Permission not found")
         val roles = rolePermissionRepository.findByPermission(permission = permission)
         val users = mutableListOf<User>()
         roles.forEach { rolePermission ->
             users.addAll(userRoleRepository.findByRole(rolePermission.role).map { it.user })
         }
-        val tokens = mutableListOf<String>()
-        users.forEach { user->
-            fcmTokensRepository.findByUser(user).forEach { fcmToken ->
-                tokens.add(fcmToken.deviceId)
-            }
-        }
-        CoroutineScope(Dispatchers.IO).launch {
-            val newVolunteerContent = NotificationContent.getNewVolunteeringRequestContent(
-                request.firstName, request.lastName, request.rollNumber
-            )
-            fcmService.sendNotificationToMultipleDevices(tokens,newVolunteerContent.first, newVolunteerContent.second)
-        }
 
-        return VolunteerRequestActionResponse(savedRequest.id, savedRequest.status.name, "Volunteer request submitted successfully")
+        val newVolunteerContent = NotificationContent.getNewVolunteeringRequestContent(
+            request.firstName, request.lastName, request.rollNumber
+        )
+        fcmService.sendNotificationToMultipleDevices(users, newVolunteerContent.first, newVolunteerContent.second)
+
+
+        return VolunteerRequestActionResponse(
+            savedRequest.id,
+            savedRequest.status.name,
+            "Volunteer request submitted successfully"
+        )
     }
 
     fun getAllVolunteerRequests(): List<VolunteerRequestActionResponse> {
@@ -112,14 +111,18 @@ class VolunteerRequestService(
             VolunteerRequestActionResponse(
                 requestId = it.id,
                 status = it.status.name,
-                message = it.reason?: "Unknown error"
+                message = it.reason ?: "Unknown error"
             )
         }
     }
 
     @Transactional
-    fun approveVolunteerRequest(request: ApproveVolunteerRequest, approvedByPid: String): VolunteerRequestActionResponse {
-        val volunteerRequest = volunteerRequestRepository.findById(request.requestId).orElseThrow { IllegalArgumentException("Request not found") }
+    fun approveVolunteerRequest(
+        request: ApproveVolunteerRequest,
+        approvedByPid: String
+    ): VolunteerRequestActionResponse {
+        val volunteerRequest = volunteerRequestRepository.findById(request.requestId)
+            .orElseThrow { IllegalArgumentException("Request not found") }
         val approvedBy = userRepository.findUserByPid(approvedByPid) ?: throw IllegalArgumentException("User not found")
         volunteerRequest.status = RequestStatus.APPROVED
         volunteerRequest.reviewedBy = approvedBy
@@ -127,58 +130,60 @@ class VolunteerRequestService(
         volunteerRequestRepository.save(volunteerRequest)
 
         //Add volunteer role to user (if not already added)
-        val volunteerRole = roleRepository.findByName(InitialRoles.VOLUNTEER.name) ?: throw IllegalArgumentException("Role not found")
+        val volunteerRole =
+            roleRepository.findByName(InitialRoles.VOLUNTEER.name) ?: throw IllegalArgumentException("Role not found")
         val ur = userRoleRepository.findByUserAndRole(volunteerRequest.requestedBy, volunteerRole)
-        if(ur == null){
-            userRoleRepository.save(UserRole(
-                user = volunteerRequest.requestedBy,
-                role = volunteerRole,
-                assignedBy = approvedBy
-            ))
+        if (ur == null) {
+            userRoleRepository.save(
+                UserRole(
+                    user = volunteerRequest.requestedBy,
+                    role = volunteerRole,
+                    assignedBy = approvedBy
+                )
+            )
         }
 
         //Send notification
-        val tokens = getDeviceTokensForUser(volunteerRequest.requestedBy)
-        if(tokens.isNotEmpty()){
-            CoroutineScope(Dispatchers.IO).launch {
-                val content = NotificationContent.getVolunteeringRequestAcceptedContent(approvedBy.firstName)
-                fcmService.sendNotificationToMultipleDevices(
-                    tokens,
-                    content.first,
-                    content.second
-                )
-            }
-        }
+        val content = NotificationContent.getVolunteeringRequestAcceptedContent(approvedBy.firstName)
+        fcmService.sendNotificationToMultipleDevices(
+            listOf(volunteerRequest.requestedBy),
+            content.first,
+            content.second
+        )
+        fcmService.sendSycNotification()
 
         //Save volunteer details in the table
-        volunteerRepository.save(Volunteer(
-            pid = volunteerRequest.requestedBy.pid,
-            rollNumber = volunteerRequest.rollNumber,
-            firstName = volunteerRequest.firstName,
-            lastName = volunteerRequest.lastName,
-            gender = volunteerRequest.gender,
-            alternateEmail = volunteerRequest.alternateEmail,
-            batch = volunteerRequest.batch,
-            programme = volunteerRequest.programme,
-            streetAddress1 = volunteerRequest.streetAddress1,
-            streetAddress2 = volunteerRequest.streetAddress2,
-            pincode = volunteerRequest.pincode,
-            city = volunteerRequest.city,
-            state = volunteerRequest.state,
-            dateOfBirth = volunteerRequest.dateOfBirth,
-            contactNumber = volunteerRequest.contactNumber,
-            college = volunteerRequest.college,
-            branch = volunteerRequest.branch,
-            yearOfStudy = volunteerRequest.yearOfStudy,
-            isActive = true
-        ))
+        volunteerRepository.save(
+            Volunteer(
+                pid = volunteerRequest.requestedBy.pid,
+                rollNumber = volunteerRequest.rollNumber,
+                firstName = volunteerRequest.firstName,
+                lastName = volunteerRequest.lastName,
+                gender = volunteerRequest.gender,
+                alternateEmail = volunteerRequest.alternateEmail,
+                batch = volunteerRequest.batch,
+                programme = volunteerRequest.programme,
+                streetAddress1 = volunteerRequest.streetAddress1,
+                streetAddress2 = volunteerRequest.streetAddress2,
+                pincode = volunteerRequest.pincode,
+                city = volunteerRequest.city,
+                state = volunteerRequest.state,
+                dateOfBirth = volunteerRequest.dateOfBirth,
+                contactNumber = volunteerRequest.contactNumber,
+                college = volunteerRequest.college,
+                branch = volunteerRequest.branch,
+                yearOfStudy = volunteerRequest.yearOfStudy,
+                isActive = true
+            )
+        )
 
         return VolunteerRequestActionResponse(volunteerRequest.id, volunteerRequest.status.name, "Request approved")
     }
 
     @Transactional
     fun rejectVolunteerRequest(request: RejectVolunteerRequest, rejectedByPid: String): VolunteerRequestActionResponse {
-        val volunteerRequest = volunteerRequestRepository.findById(request.requestId).orElseThrow { IllegalArgumentException("Request not found") }
+        val volunteerRequest = volunteerRequestRepository.findById(request.requestId)
+            .orElseThrow { IllegalArgumentException("Request not found") }
         val rejectedBy = userRepository.findUserByPid(rejectedByPid) ?: throw IllegalArgumentException("User not found")
         volunteerRequest.status = RequestStatus.REJECTED
         volunteerRequest.reviewedBy = rejectedBy
@@ -187,17 +192,13 @@ class VolunteerRequestService(
         volunteerRequestRepository.save(volunteerRequest)
 
         //Send notification
-        val tokens = getDeviceTokensForUser(volunteerRequest.requestedBy)
-        if(tokens.isNotEmpty()){
-            CoroutineScope(Dispatchers.IO).launch {
-                val content = NotificationContent.getVolunteeringRequestRejectedContent(request.reason ?: "Unknown reason")
-                fcmService.sendNotificationToMultipleDevices(
-                    tokens,
-                    content.first,
-                    content.second
-                )
-            }
-        }
+        val content =
+            NotificationContent.getVolunteeringRequestRejectedContent(request.reason ?: "Unknown reason")
+        fcmService.sendNotificationToMultipleDevices(
+            listOf(volunteerRequest.requestedBy),
+            content.first,
+            content.second
+        )
 
         return VolunteerRequestActionResponse(volunteerRequest.id, volunteerRequest.status.name, "Request rejected")
     }
@@ -267,11 +268,4 @@ class VolunteerRequestService(
         )
     }
 
-    private fun getDeviceTokensForUser(user: User): List<String> {
-        val tokens = mutableListOf<String>()
-        fcmTokensRepository.findByUser(user).forEach { fcmToken ->
-            tokens.add(fcmToken.deviceId)
-        }
-        return tokens
-    }
 }

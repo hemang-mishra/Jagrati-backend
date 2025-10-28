@@ -12,7 +12,8 @@ import java.time.LocalDate
 @Service
 class VolunteerService(
     private val volunteerRepository: VolunteerRepository,
-    private val imageKitService: ImageKitService
+    private val imageKitService: ImageKitService,
+    private val fcmService: FCMService
 ) {
     fun getAllVolunteers(): List<VolunteerResponse> {
         return volunteerRepository.findAll().map { v -> v.toResponse() }
@@ -55,6 +56,7 @@ class VolunteerService(
         )
 
         val savedVolunteer = volunteerRepository.save(updatedVolunteer)
+        fcmService.sendSycNotification()
         return savedVolunteer.toResponse()
     }
 }

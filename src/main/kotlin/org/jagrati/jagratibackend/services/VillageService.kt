@@ -19,18 +19,19 @@ import org.springframework.stereotype.Service
 @Service
 class VillageService(
     private val villageRepository: VillageRepository,
-    private val studentRepository: StudentRepository,
-    private val groupRepository: GroupRepository
+    private val fcmService: FCMService
 ) {
     fun addNewVillage(request: StringRequest){
         villageRepository.save(
             Village(name = request.value)
         )
+        fcmService.sendSycNotification()
     }
 
     fun deleteVillage(request: LongRequest){
         val village = villageRepository.findById(request.value).orElseThrow { IllegalArgumentException("Village not found") }
         villageRepository.save(village.copy(isActive = false))
+        fcmService.sendSycNotification()
     }
 
     fun getAllActiveVillages(): VillageListResponse {

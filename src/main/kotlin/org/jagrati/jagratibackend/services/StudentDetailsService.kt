@@ -25,7 +25,8 @@ class StudentDetailsService(
     private val villageRepository: VillageRepository,
     private val groupRepository: GroupRepository,
     private val studentGroupHistoryRepository: StudentGroupHistoryRepository,
-    private val imageKitService: ImageKitService
+    private val imageKitService: ImageKitService,
+    private val fcmService: FCMService
 ) {
     fun registerNewStudent(details: StudentRequest) {
         val village = villageRepository.findById(details.villageId).orElseThrow { IllegalArgumentException("Village not found") }
@@ -58,6 +59,7 @@ class StudentDetailsService(
                 assignedAt = LocalDateTime.now()
             )
         )
+        fcmService.sendSycNotification()
     }
 
     fun updateStudent(details: UpdateStudentRequest) {
@@ -99,6 +101,7 @@ class StudentDetailsService(
                 )
             )
         }
+        fcmService.sendSycNotification()
     }
 
     fun getGroupTransitions(pid: String): StudentGroupHistoryListResponse {
