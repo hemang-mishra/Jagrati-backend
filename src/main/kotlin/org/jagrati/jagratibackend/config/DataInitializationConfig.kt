@@ -254,12 +254,8 @@ class DataInitializationConfig(
         val userRole = roles[InitialRoles.USER.roleString]
         if (userRole != null) {
             val userPermissions = listOf(
-                AllPermissions.STUDENT_READ,
-                AllPermissions.ATTENDANCE_READ,
-                AllPermissions.SYLLABUS_READ,
                 AllPermissions.POST_READ,
                 AllPermissions.PERMISSION_VIEW,
-                AllPermissions.USER_VIEW
             )
 
             userPermissions.forEach { allPermission ->
