@@ -95,12 +95,7 @@ class AttendanceService(
             }
             val user = userRepository.findByPid(v.pid)
             if (user != null) {
-                val tokens = fcmTokenRepository.findByUser(user).map { it.deviceId }
-                if (tokens.isNotEmpty()) {
-                    CoroutineScope(Dispatchers.IO).launch {
-                        fcmService.sendNotificationToMultipleDevices(tokens, NotificationContent.APPRECIATION_FOR_VOLUNTEERING.title, NotificationContent.APPRECIATION_FOR_VOLUNTEERING.description)
-                    }
-                }
+                fcmService.sendNotificationToMultipleDevices(listOf(user), NotificationContent.APPRECIATION_FOR_VOLUNTEERING)
             }
         }
         return BulkAttendanceResultResponse(

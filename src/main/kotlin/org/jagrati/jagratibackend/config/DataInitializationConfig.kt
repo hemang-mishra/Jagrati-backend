@@ -143,7 +143,7 @@ class DataInitializationConfig(
     private fun initializePermissions(): Map<String, Permission> {
         val permissionsMap = mutableMapOf<String, Permission>()
 
-        AllPermissions.values().forEach { allPermission ->
+        AllPermissions.entries.forEach { allPermission ->
             val existingPermission = permissionRepository.findByName(allPermission.name)
             if (existingPermission == null) {
                 val permission = Permission(
@@ -254,12 +254,8 @@ class DataInitializationConfig(
         val userRole = roles[InitialRoles.USER.roleString]
         if (userRole != null) {
             val userPermissions = listOf(
-                AllPermissions.STUDENT_READ,
-                AllPermissions.ATTENDANCE_READ,
-                AllPermissions.SYLLABUS_READ,
                 AllPermissions.POST_READ,
                 AllPermissions.PERMISSION_VIEW,
-                AllPermissions.USER_VIEW
             )
 
             userPermissions.forEach { allPermission ->

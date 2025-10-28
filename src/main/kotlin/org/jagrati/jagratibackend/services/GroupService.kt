@@ -10,7 +10,8 @@ import org.springframework.stereotype.Service
 
 @Service
 class GroupService(
-    private val groupRepository: GroupRepository
+    private val groupRepository: GroupRepository,
+    private val fcmService: FCMService
 ) {
     fun addNewGroup(request: NameDescriptionRequest) {
         groupRepository.save(
@@ -19,11 +20,13 @@ class GroupService(
                 description = request.description
             )
         )
+        fcmService.sendSycNotification()
     }
 
     fun deleteGroup(request: LongRequest) {
         val group = groupRepository.findById(request.value).orElseThrow { IllegalArgumentException("Group not found") }
         groupRepository.save(group.copy(isActive = false))
+        fcmService.sendSycNotification()
     }
 
     fun getAllActiveGroups(): GroupListResponse {
