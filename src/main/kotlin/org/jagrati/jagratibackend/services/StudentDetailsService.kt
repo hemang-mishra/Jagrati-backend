@@ -83,7 +83,7 @@ class StudentDetailsService(
             isActive = details.isActive ?: existing.isActive,
         )
         studentRepository.save(updated)
-        if(details.profilePic?.convertToString() != existing.profilePic){
+        if(details.profilePic?.fileId != ImageKitResponse.getFromString(existing.profilePic)?.fileId && details.profilePic?.fileId != null){
             val existingProfilePic = ImageKitResponse.getFromString(existing.profilePic)
             if(existingProfilePic?.fileId != null){
                 imageKitService.deleteFile(existingProfilePic.fileId)
