@@ -58,24 +58,6 @@ class FCMService(
         logger.info("Data sent to topic: {}", topic)
     }
 
-    private suspend fun sendNotificationToDevice(token: String, title: String, message: String): String =
-        withContext(Dispatchers.IO) {
-            val notification = Notification.builder()
-                .setTitle(title)
-                .setBody(message)
-                .build()
-
-            val msg = Message.builder()
-                .setToken(token)
-                .setNotification(notification)
-                .build()
-
-            val future: ApiFuture<String> = FirebaseMessaging.getInstance().sendAsync(msg)
-            val messageId = future.await()
-
-            logger.info("Sent FCM message with ID: $messageId")
-            messageId
-        }
 
 
     private suspend fun sendNotificationToMultipleDevices(tokens: List<String>, title: String, message: String) =
@@ -85,14 +67,9 @@ class FCMService(
                 return@withContext
             }
 
-            val notification = Notification.builder()
-                .setTitle(title)
-                .setBody(message)
-                .build()
-
             val multicastMessage = MulticastMessage.builder()
                 .addAllTokens(tokens)
-                .setNotification(notification)
+                .putAllData(mapOf(Pair("title", title), Pair("message", message)))
                 .build()
 
             val future = FirebaseMessaging.getInstance().sendEachForMulticastAsync(multicastMessage)
