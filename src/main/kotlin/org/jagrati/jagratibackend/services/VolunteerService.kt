@@ -28,8 +28,9 @@ class VolunteerService(
         val existingVolunteer = volunteerRepository.findById(pid)
             .orElseThrow { IllegalArgumentException("Volunteer not found") }
 
-        if(updateRequest.profilePic?.convertToString() != existingVolunteer.profilePicDetails){
-            val existingProfilePic = ImageKitResponse.getFromString(existingVolunteer.profilePicDetails)
+
+        val existingProfilePic = ImageKitResponse.getFromString(existingVolunteer.profilePicDetails)
+        if(updateRequest.profilePic?.fileId != existingProfilePic?.fileId){
             if(existingProfilePic?.fileId != null)
             imageKitService.deleteFile(existingProfilePic.fileId)
         }
