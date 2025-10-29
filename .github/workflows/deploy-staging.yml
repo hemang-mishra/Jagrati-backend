@@ -31,7 +31,7 @@ jobs:
 
       - name: Build & Push Docker Image (staging)
         run: |
-          IMAGE_TAG=ghcr.io/${{ github.repository_owner }}/jagrati-backend:staging
+          IMAGE_TAG=ghcr.io/hemang-mishra/jagrati-backend:staging
           docker build -t $IMAGE_TAG .
           docker push $IMAGE_TAG
           
