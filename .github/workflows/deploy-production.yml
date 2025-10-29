@@ -46,7 +46,7 @@ jobs:
           host: ${{ secrets.PROD_HOST }}
           username: ${{ secrets.PROD_USERNAME }}
           key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
-          source: "docker/prod/docker-compose.yml"
+          source: "docker/prod/docker-compose.yaml"
           target: "/opt/apps/production/"
           strip_components: 2
 
