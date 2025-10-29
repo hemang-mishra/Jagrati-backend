@@ -46,8 +46,9 @@ jobs:
           host: ${{ secrets.PROD_HOST }}
           username: ${{ secrets.PROD_USERNAME }}
           key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
-          source: "docker/prod/docker-compose.yaml"
-          target: "/opt/apps/prod/"
+          source: "docker/prod/docker-compose.yml"
+          target: "/opt/apps/production/"
+          strip_components: 2
 
       - name: Deploy production stack via SSH
         uses: appleboy/ssh-action@v1.1.0
@@ -57,7 +58,7 @@ jobs:
           key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
           script: |
             cd /opt/apps/production
-            docker compose pull
+            /usr/bin/docker compose pull
             echo "BASE_URL=${{ secrets.PROD_BASE_URL }}" > .env
             echo "POSTGRES_DB=${{ secrets.PROD_POSTGRES_DB }}" >> .env
             echo "POSTGRES_USER=${{ secrets.PROD_POSTGRES_USERNAME }}" >> .env
@@ -70,8 +71,8 @@ jobs:
             echo "ADMIN_PASS=${{ secrets.PROD_ADMIN_PASS }}" >> .env
             echo "MAIL_ID=${{ secrets.PROD_MAIL_ID }}" >> .env
             echo "FIREBASE_CREDENTIALS_BASE64=${{ secrets.PROD_FIREBASE_CREDENTIALS_BASE64 }}" >> .env
-            
+            /usr/bin/docker compose up -d
             docker compose up -d
-            
+            /usr/bin/docker compose ps
             docker compose ps
 

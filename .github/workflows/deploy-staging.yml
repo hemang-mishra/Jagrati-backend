@@ -48,6 +48,7 @@ jobs:
           key: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
           source: "docker/staging/docker-compose.yaml"
           target: "/opt/apps/staging/"
+          strip_components: 2
 
       - name: Deploy staging stack via SSH
         uses: appleboy/ssh-action@v1.1.0
@@ -57,7 +58,7 @@ jobs:
           key: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
           script: |
             cd /opt/apps/staging
-            docker compose pull
+            /usr/bin/docker compose pull
             echo "BASE_URL=${{ secrets.STAGING_BASE_URL }}" > .env
             echo "POSTGRES_DB=${{ secrets.STAGING_POSTGRES_DB }}" >> .env
             echo "POSTGRES_USER=${{ secrets.STAGING_POSTGRES_USERNAME }}" >> .env
@@ -70,7 +71,7 @@ jobs:
             echo "ADMIN_PASS=${{ secrets.STAGING_ADMIN_PASS }}" >> .env
             echo "MAIL_ID=${{ secrets.STAGING_MAIL_ID }}" >> .env
             echo "FIREBASE_CREDENTIALS_BASE64=${{ secrets.STAGING_FIREBASE_CREDENTIALS_BASE64 }}" >> .env
-            
+            /usr/bin/docker compose up -d
             docker compose up -d
-            
+            /usr/bin/docker compose ps
             docker compose ps
