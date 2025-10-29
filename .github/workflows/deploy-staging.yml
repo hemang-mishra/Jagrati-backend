@@ -1,0 +1,77 @@
+name: Deploy staging
+on:
+  push:
+    branches:
+      - dev
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build with Gradle
+        run: ./gradlew clean build -x test
+
+      - name: Login to Github Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: hemang-mishra
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & Push Docker Image (staging)
+        run: |
+          IMAGE_TAG=ghcr.io/hemang-mishra/jagrati-backend:staging
+          docker build -t $IMAGE_TAG .
+          docker push $IMAGE_TAG
+          
+
+      - name: Copy docker-compose file to server
+        uses: appleboy/scp-action@v1.0.0
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USERNAME }}
+          key: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
+          source: "docker/staging/docker-compose.yaml"
+          target: "/opt/apps/staging/"
+          strip_components: 2
+
+      - name: Deploy staging stack via SSH
+        uses: appleboy/ssh-action@v1.1.0
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USERNAME }}
+          key: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/apps/staging
+            /usr/bin/docker compose pull
+            echo "BASE_URL=${{ secrets.STAGING_BASE_URL }}" > .env
+            echo "POSTGRES_DB=${{ secrets.STAGING_POSTGRES_DB }}" >> .env
+            echo "POSTGRES_USER=${{ secrets.STAGING_POSTGRES_USERNAME }}" >> .env
+            echo "POSTGRES_PASSWORD=${{ secrets.STAGING_POSTGRES_PASSWORD }}" >> .env
+            echo "JWT_SECRET_BASE_64=${{ secrets.STAGING_JWT_SECRET_BASE_64 }}" >> .env
+            echo "IMAGE_KIT_PRIVATE_KEY=${{ secrets.STAGING_IMAGE_KIT_PRIVATE_KEY }}" >> .env
+            echo "OAUTH2_CLIENT_ID=${{ secrets.STAGING_OAUTH2_CLIENT_ID }}" >> .env
+            echo "GMAIL_PASS=${{ secrets.STAGING_GMAIL_PASS }}" >> .env
+            echo "ADMIN_MAIL=${{ secrets.STAGING_ADMIN_MAIL }}" >> .env
+            echo "ADMIN_PASS=${{ secrets.STAGING_ADMIN_PASS }}" >> .env
+            echo "MAIL_ID=${{ secrets.STAGING_MAIL_ID }}" >> .env
+            echo "FIREBASE_CREDENTIALS_BASE64=${{ secrets.STAGING_FIREBASE_CREDENTIALS_BASE64 }}" >> .env
+            /usr/bin/docker compose up -d
+            docker compose up -d
+            /usr/bin/docker compose ps
+            docker compose ps
