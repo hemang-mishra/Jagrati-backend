@@ -18,7 +18,7 @@ services:
       - staging_net
 
   app:
-    image: ghcr.io/hemang-mishra/jagrati:staging
+    image: ghcr.io/hemang-mishra/jagrati-backend:staging
     container_name: staging_app
     restart: always
     env_file:
