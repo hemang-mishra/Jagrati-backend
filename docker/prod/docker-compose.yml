@@ -18,7 +18,7 @@ services:
       - prod_net
 
   app:
-    image: ghcr.io/hemang-mishra/jagrati:prod
+    image: ghcr.io/hemang-mishra/jagrati-backend:prod
     container_name: prod_app
     restart: always
     env_file:
