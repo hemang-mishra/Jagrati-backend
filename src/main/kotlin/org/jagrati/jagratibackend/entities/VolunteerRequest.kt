@@ -19,7 +19,7 @@ import java.time.LocalDateTime
 @Entity
 @Table(name = "volunteer_requests")
 @SQLDelete(
-    sql = "UPDATE volunteer_requests SET roll_number = NULL, first_name = 'Deleted', last_name = 'Request', alternate_email = NULL, batch = NULL, programme = NULL, street_address_1 = NULL, street_address_2 = NULL, pincode = NULL, city = NULL, state = NULL, contact_number = NULL, college = NULL, branch = NULL, year_of_study = NULL, reason = NULL, is_active = false WHERE id = ?"
+    sql = "UPDATE volunteer_requests SET roll_number = NULL, first_name = 'Deleted', last_name = 'Request', alternate_email = NULL, batch = NULL, programme = NULL, street_address_1 = NULL, street_address_2 = NULL, pincode = NULL, city = NULL, state = NULL, contact_number = NULL, college = NULL, branch = NULL, year_of_study = NULL, reason = NULL WHERE id = ?"
 )
 data class VolunteerRequest(
     @Id

@@ -69,7 +69,7 @@ class UserRoleService(
 
     fun getAllUsersWithRoles(): UserWithRolesListResponse {
         val users = userRepository.findAll()
-        val result = users.map { user ->
+        val result = users.filter { user -> user.isActive }.map { user ->
             val roles = userRoleRepository.findByUser(user).map { ur ->
                 RoleSummaryResponse(
                     id = ur.role.id,

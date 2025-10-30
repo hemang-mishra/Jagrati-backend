@@ -84,7 +84,7 @@ class UserServiceImpl(
         refreshTokens.forEach { refreshTokenRepository.delete(it) }
         volunteerRepository.flush()
         refreshTokenRepository.flush()
-        
+
         userRepository.delete(user)
 
         // Send FCM sync notification
