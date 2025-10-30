@@ -15,7 +15,7 @@ enum class NotificationContent(
             requesterLastName: String,
             requesterRollNo: String?
         ): Pair<String, String> {
-            val title = "New Volunteering Request"
+            val title = "New Volunteer Request"
             val description = "$requesterFirstName $requesterLastName ($requesterRollNo) wants to join as volunteer!!."
             return Pair(title, description)
         }
