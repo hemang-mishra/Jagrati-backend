@@ -58,7 +58,7 @@ class AuthService(
             throw IllegalStateException("User with this email already exists")
         }
 
-        val pid = PidGenerator.generatePid(name = firstName)
+        val pid = PidGenerator.generatePid()
         // Check if user does not exist with this pid (it won't happen in real world scenarios)
         val user = userService.getUserById(pid)
         if (user != null) {
@@ -276,7 +276,7 @@ class AuthService(
 
         if (user == null) {
             // Create new user if not exists
-            val pid = PidGenerator.generatePid(name = firstName)
+            val pid = PidGenerator.generatePid()
             val password = UUID.randomUUID().toString()
             user = User(
                 pid = pid,

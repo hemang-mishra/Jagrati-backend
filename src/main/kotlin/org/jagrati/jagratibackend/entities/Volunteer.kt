@@ -6,10 +6,12 @@ import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import org.hibernate.annotations.SQLDelete
 import org.jagrati.jagratibackend.entities.enums.Gender
 import java.time.LocalDate
 
 @Entity
+@SQLDelete(sql = "UPDATE volunteers SET roll_number = NULL, first_name = 'Deleted', last_name = 'Volunteer', alternate_email = NULL, batch = NULL, programme = NULL, street_address_1 = NULL, street_address_2 = NULL, pincode = NULL, city = NULL, state = NULL, contact_number = NULL, college = NULL, branch = NULL, year_of_study = NULL, profile_pic_details = NULL, is_active = false WHERE pid = ?")
 @Table(name = "volunteers")
 data class Volunteer(
     @Id

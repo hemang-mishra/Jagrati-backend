@@ -9,9 +9,11 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
+import org.hibernate.annotations.SQLDelete
 import org.jagrati.jagratibackend.entities.enums.Gender
 
 @Entity
+@SQLDelete(sql = "UPDATE students SET profile_pic_data = NULL, year_of_birth = NULL, first_name = 'Deleted', last_name = 'Student', school_class = NULL, primary_contact_no = NULL, secondary_contact_no = NULL, fathers_name = NULL, mothers_name = NULL, is_active = false WHERE pid = ?")
 @Table(name = "students")
 data class Student(
     @Id
