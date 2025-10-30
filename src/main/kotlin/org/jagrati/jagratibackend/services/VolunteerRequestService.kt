@@ -88,7 +88,7 @@ class VolunteerRequestService(
         val permission = permissionRepository.findByName(AllPermissions.VOLUNTEER_REQUEST_APPROVE.name)
             ?: throw IllegalStateException("Permission not found")
         val roles = rolePermissionRepository.findByPermission(permission = permission)
-        val users = mutableListOf<User>()
+        val users = mutableSetOf<User>()
         roles.forEach { rolePermission ->
             users.addAll(userRoleRepository.findByRole(rolePermission.role).map { it.user })
         }
@@ -96,7 +96,7 @@ class VolunteerRequestService(
         val newVolunteerContent = NotificationContent.getNewVolunteeringRequestContent(
             request.firstName, request.lastName, request.rollNumber
         )
-        fcmService.sendNotificationToMultipleDevices(users, newVolunteerContent.first, newVolunteerContent.second)
+        fcmService.sendNotificationToMultipleDevices(users.toList(), newVolunteerContent.first, newVolunteerContent.second)
 
 
         return VolunteerRequestActionResponse(
