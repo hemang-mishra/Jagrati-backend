@@ -78,7 +78,7 @@ class UserServiceImpl(
         refreshTokens.forEach { refreshTokenRepository.delete(it) }
 
         // Send FCM sync notification
-        fcmService.sendSycNotification()
+        fcmService.sendSyncNotification()
 
         return StringResponse("User deleted successfully")
     }

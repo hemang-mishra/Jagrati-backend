@@ -62,7 +62,7 @@ class StudentDetailsService(
                 assignedAt = LocalDateTime.now()
             )
         )
-        fcmService.sendSycNotification()
+        fcmService.sendSyncNotification()
     }
 
     @Transactional
@@ -105,7 +105,7 @@ class StudentDetailsService(
                 )
             )
         }
-        fcmService.sendSycNotification()
+        fcmService.sendSyncNotification()
     }
 
     fun getGroupTransitions(pid: String): StudentGroupHistoryListResponse {
@@ -134,7 +134,7 @@ class StudentDetailsService(
             imageKitService.deleteFile(profilePic.fileId)
         }
         studentRepository.delete(student)
-        fcmService.sendSycNotification()
+        fcmService.sendSyncNotification()
         return StringResponse("Student deleted")
     }
 

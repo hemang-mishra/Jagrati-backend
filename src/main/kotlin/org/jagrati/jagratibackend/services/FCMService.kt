@@ -4,7 +4,6 @@ import com.google.api.core.ApiFuture
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.Message
 import com.google.firebase.messaging.MulticastMessage
-import com.google.firebase.messaging.Notification
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -17,7 +16,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
-import kotlin.math.log
 
 @Service
 class FCMService(
@@ -41,7 +39,7 @@ class FCMService(
         }
     }
 
-    fun sendSycNotification(){
+    fun sendSyncNotification(){
         CoroutineScope(Dispatchers.IO).launch {
             sendDataToTopic("realtime-data-sync", mapOf("Sync" to "true"))
         }

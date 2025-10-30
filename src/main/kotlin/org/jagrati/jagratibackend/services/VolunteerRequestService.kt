@@ -10,9 +10,6 @@ import MyVolunteerRequestResponse
 import RejectVolunteerRequest
 import UserSummaryDTO
 import VolunteerRequestActionResponse
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import org.jagrati.jagratibackend.config.InitialRoles
 import org.jagrati.jagratibackend.entities.User
 import org.jagrati.jagratibackend.entities.UserRole
@@ -153,7 +150,7 @@ class VolunteerRequestService(
             content.first,
             content.second
         )
-        fcmService.sendSycNotification()
+        fcmService.sendSyncNotification()
 
         //Save volunteer details in the table
         volunteerRepository.save(
