@@ -123,6 +123,9 @@ class VolunteerRequestService(
     ): VolunteerRequestActionResponse {
         val volunteerRequest = volunteerRequestRepository.findById(request.requestId)
             .orElseThrow { IllegalArgumentException("Request not found") }
+        if (volunteerRequest.status != RequestStatus.PENDING) {
+            throw IllegalStateException("Request already processed.")
+        }
         val approvedBy = userRepository.findUserByPid(approvedByPid) ?: throw IllegalArgumentException("User not found")
         volunteerRequest.status = RequestStatus.APPROVED
         volunteerRequest.reviewedBy = approvedBy
@@ -184,6 +187,9 @@ class VolunteerRequestService(
     fun rejectVolunteerRequest(request: RejectVolunteerRequest, rejectedByPid: String): VolunteerRequestActionResponse {
         val volunteerRequest = volunteerRequestRepository.findById(request.requestId)
             .orElseThrow { IllegalArgumentException("Request not found") }
+        if (volunteerRequest.status != RequestStatus.PENDING) {
+            throw IllegalStateException("Request already processed.")
+        }
         val rejectedBy = userRepository.findUserByPid(rejectedByPid) ?: throw IllegalArgumentException("User not found")
         volunteerRequest.status = RequestStatus.REJECTED
         volunteerRequest.reviewedBy = rejectedBy
