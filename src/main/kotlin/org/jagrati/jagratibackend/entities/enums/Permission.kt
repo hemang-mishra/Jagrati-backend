@@ -25,6 +25,7 @@ enum class AllPermissions(val module: Module, val action: Action) {
     USER_VIEW(Module.VOLUNTEER, Action.READ),
     USER_ROLE_ASSIGN(Module.VOLUNTEER, Action.ASSIGN),
     USER_ROLE_REMOVE(Module.VOLUNTEER, Action.DELETE),
+    USER_DELETE(Module.VOLUNTEER, Action.DELETE),
 
     // --- Volunteer Requests Screen Permissions ---
     VOLUNTEER_REQUEST_VIEW(Module.VOLUNTEER, Action.READ),

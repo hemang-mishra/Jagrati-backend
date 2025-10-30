@@ -4,6 +4,7 @@ import org.jagrati.jagratibackend.entities.User
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Component
+import java.util.UUID
 
 /**
  * Utility class for Spring Security operations.
@@ -27,8 +28,8 @@ class SecurityUtils {
 }
 
 object PidGenerator {
-    fun generatePid(timeInMillis: Long = System.currentTimeMillis(), name: String): String{
-        val sanitizedName = name.replace(Regex("[^a-zA-Z0-9]"), "_")
-        return "${sanitizedName}_$timeInMillis"
+    fun generatePid(timeInMillis: Long = System.currentTimeMillis()): String{
+        val uuid = UUID.randomUUID().toString()
+        return "${uuid}_$timeInMillis"
     }
 }

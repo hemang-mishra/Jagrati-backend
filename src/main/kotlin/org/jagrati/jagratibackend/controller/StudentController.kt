@@ -6,6 +6,7 @@ import org.jagrati.jagratibackend.dto.StudentGroupHistoryResponse
 import org.jagrati.jagratibackend.dto.StudentResponse
 import org.jagrati.jagratibackend.services.StudentDetailsService
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -19,6 +20,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import org.jagrati.jagratibackend.dto.StringResponse
 import org.jagrati.jagratibackend.dto.StudentGroupHistoryListResponse
 import org.jagrati.jagratibackend.entities.enums.AllPermissions
 import org.jagrati.jagratibackend.security.RequiresPermission
@@ -77,4 +79,16 @@ class StudentController(
     @GetMapping("/{pid}")
     fun getStudentByPid(@PathVariable pid: String): ResponseEntity<StudentResponse> =
         ResponseEntity.ok(studentDetailsService.getStudentByPid(pid))
+
+    @Operation(summary = "Delete student by pid", description = "Soft deletes a student by anonymizing their data")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Student deleted successfully", content = [Content(schema = Schema(implementation = String::class))]),
+        ApiResponse(responseCode = "404", description = "Student not found")
+    ])
+    @RequiresPermission(AllPermissions.STUDENT_DELETE)
+    @DeleteMapping("/{pid}")
+    fun deleteStudent(@PathVariable pid: String): ResponseEntity<StringResponse> {
+        val response = studentDetailsService.deleteStudent(pid)
+        return ResponseEntity.ok(response)
+    }
 }

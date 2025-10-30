@@ -20,13 +20,13 @@ class GroupService(
                 description = request.description
             )
         )
-        fcmService.sendSycNotification()
+        fcmService.sendSyncNotification()
     }
 
     fun deleteGroup(request: LongRequest) {
         val group = groupRepository.findById(request.value).orElseThrow { IllegalArgumentException("Group not found") }
         groupRepository.save(group.copy(isActive = false))
-        fcmService.sendSycNotification()
+        fcmService.sendSyncNotification()
     }
 
     fun getAllActiveGroups(): GroupListResponse {
