@@ -10,9 +10,6 @@ import MyVolunteerRequestResponse
 import RejectVolunteerRequest
 import UserSummaryDTO
 import VolunteerRequestActionResponse
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import org.jagrati.jagratibackend.config.InitialRoles
 import org.jagrati.jagratibackend.entities.User
 import org.jagrati.jagratibackend.entities.UserRole
@@ -88,7 +85,7 @@ class VolunteerRequestService(
         val permission = permissionRepository.findByName(AllPermissions.VOLUNTEER_REQUEST_APPROVE.name)
             ?: throw IllegalStateException("Permission not found")
         val roles = rolePermissionRepository.findByPermission(permission = permission)
-        val users = mutableListOf<User>()
+        val users = mutableSetOf<User>()
         roles.forEach { rolePermission ->
             users.addAll(userRoleRepository.findByRole(rolePermission.role).map { it.user })
         }
@@ -96,7 +93,7 @@ class VolunteerRequestService(
         val newVolunteerContent = NotificationContent.getNewVolunteeringRequestContent(
             request.firstName, request.lastName, request.rollNumber
         )
-        fcmService.sendNotificationToMultipleDevices(users, newVolunteerContent.first, newVolunteerContent.second)
+        fcmService.sendNotificationToMultipleDevices(users.toList(), newVolunteerContent.first, newVolunteerContent.second)
 
 
         return VolunteerRequestActionResponse(
@@ -123,6 +120,9 @@ class VolunteerRequestService(
     ): VolunteerRequestActionResponse {
         val volunteerRequest = volunteerRequestRepository.findById(request.requestId)
             .orElseThrow { IllegalArgumentException("Request not found") }
+        if (volunteerRequest.status != RequestStatus.PENDING) {
+            throw IllegalStateException("Request already processed.")
+        }
         val approvedBy = userRepository.findUserByPid(approvedByPid) ?: throw IllegalArgumentException("User not found")
         volunteerRequest.status = RequestStatus.APPROVED
         volunteerRequest.reviewedBy = approvedBy
@@ -150,7 +150,7 @@ class VolunteerRequestService(
             content.first,
             content.second
         )
-        fcmService.sendSycNotification()
+        fcmService.sendSyncNotification()
 
         //Save volunteer details in the table
         volunteerRepository.save(
@@ -184,6 +184,9 @@ class VolunteerRequestService(
     fun rejectVolunteerRequest(request: RejectVolunteerRequest, rejectedByPid: String): VolunteerRequestActionResponse {
         val volunteerRequest = volunteerRequestRepository.findById(request.requestId)
             .orElseThrow { IllegalArgumentException("Request not found") }
+        if (volunteerRequest.status != RequestStatus.PENDING) {
+            throw IllegalStateException("Request already processed.")
+        }
         val rejectedBy = userRepository.findUserByPid(rejectedByPid) ?: throw IllegalArgumentException("User not found")
         volunteerRequest.status = RequestStatus.REJECTED
         volunteerRequest.reviewedBy = rejectedBy

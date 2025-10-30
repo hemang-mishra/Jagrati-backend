@@ -2,17 +2,17 @@ package org.jagrati.jagratibackend.entities
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
-import jakarta.persistence.FetchType
 import jakarta.persistence.Id
 import jakarta.persistence.Index
-import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import org.hibernate.annotations.Formula
+import org.hibernate.annotations.SQLDelete
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
 
 @Entity
+@SQLDelete(sql = "UPDATE users SET first_name = 'Deleted', last_name = 'User', email = pid || '@deleted', password_hash = '', profile_picture_url = NULL, is_email_verified = false, is_active = false WHERE pid = ?")
 @Table(name = "users",
     indexes = [
         Index(columnList = "email", name = "idx_user_email"),
