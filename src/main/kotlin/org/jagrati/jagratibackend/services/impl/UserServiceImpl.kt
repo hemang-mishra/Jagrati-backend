@@ -64,7 +64,7 @@ class UserServiceImpl(
             //Making isActive false to trigger onUpdate() which is crucial to send sync notification to clients
             volunteerRepository.save(volunteer.copy(isActive = true))
             volunteerRepository.flush()
-            
+
             val profilePic = volunteer.profilePicDetails?.let { ImageKitResponse.getFromString(it) }
             if (profilePic != null) {
                 try {
@@ -80,10 +80,10 @@ class UserServiceImpl(
         //Making isActive false to trigger onUpdate() which is crucial to send sync notification to clients
         userRepository.save(user.copy(isActive = false))
         userRepository.flush()
-
-        userRepository.delete(user)
         requests.forEach { volunteerRequestRepository.delete(it) }
         refreshTokens.forEach { refreshTokenRepository.delete(it) }
+        
+        userRepository.delete(user)
 
         // Send FCM sync notification
         fcmService.sendSyncNotification()
