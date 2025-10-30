@@ -82,6 +82,8 @@ class UserServiceImpl(
         userRepository.flush()
         requests.forEach { volunteerRequestRepository.delete(it) }
         refreshTokens.forEach { refreshTokenRepository.delete(it) }
+        volunteerRepository.flush()
+        refreshTokenRepository.flush()
         
         userRepository.delete(user)
 
