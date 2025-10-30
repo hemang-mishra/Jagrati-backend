@@ -23,8 +23,8 @@ class FCMService(
 ) {
     private val logger = LoggerFactory.getLogger(FCMService::class.java)
 
-    fun sendNotificationToMultipleDevices(users: List<User>, content: NotificationContent){
-        sendNotificationToMultipleDevices(users =users, title=content.title, description=content.description)
+    fun sendNotificationToMultipleDevices(users: List<User>, content: NotificationContent) {
+        sendNotificationToMultipleDevices(users = users, title = content.title, description = content.description)
     }
 
     fun sendNotificationToMultipleDevices(users: List<User>, title: String, description: String) {
@@ -39,13 +39,35 @@ class FCMService(
         }
     }
 
-    fun sendSyncNotification(){
+    fun sendSyncNotification() {
         CoroutineScope(Dispatchers.IO).launch {
             sendDataToTopic("realtime-data-sync", mapOf("Sync" to "true"))
         }
     }
 
-    suspend fun sendDataToTopic(topic: String, data: Map<String, String>){
+    fun sendSyncNotificationToUsers(users: List<User>) {
+        sendDataToUsers(users, mapOf("Sync" to "true"))
+    }
+
+    fun sendDataToUsers(users: List<User>, data: Map<String, String>) {
+        val tokens = mutableListOf<String>()
+        users.forEach { user ->
+            tokens.addAll(fcmTokensRepository.findByUser(user).map { it.deviceId })
+        }
+        tokens.chunked(500).forEach { chunk ->
+            val msg = MulticastMessage.builder()
+                .addAllTokens(chunk)
+                .putAllData(data)
+                .build()
+            CoroutineScope(Dispatchers.IO).launch {
+                val future = FirebaseMessaging.getInstance().sendEachForMulticastAsync(msg)
+                val response = future.await()
+                logger.info("Data sync notification sent — Success: ${response.successCount}, Failures: ${response.failureCount}")
+            }
+        }
+    }
+
+    suspend fun sendDataToTopic(topic: String, data: Map<String, String>) {
         val msg = Message.builder()
             .setTopic(topic)
             .putAllData(data)
@@ -57,7 +79,6 @@ class FCMService(
     }
 
 
-
     private suspend fun sendNotificationToMultipleDevices(tokens: List<String>, title: String, message: String) =
         withContext(Dispatchers.IO) {
             if (tokens.isEmpty()) {
@@ -65,25 +86,25 @@ class FCMService(
                 return@withContext
             }
 
-            val multicastMessage = MulticastMessage.builder()
-                .addAllTokens(tokens)
-                .putAllData(mapOf(Pair("title", title), Pair("message", message)))
-                .build()
+            tokens.chunked(500).forEach { chunk ->
+                val multicastMessage = MulticastMessage.builder()
+                    .addAllTokens(chunk)
+                    .putAllData(mapOf(Pair("title", title), Pair("message", message)))
+                    .build()
 
-            val future = FirebaseMessaging.getInstance().sendEachForMulticastAsync(multicastMessage)
-            val response = future.await()
+                val future = FirebaseMessaging.getInstance().sendEachForMulticastAsync(multicastMessage)
+                val response = future.await()
 
-            logger.info("Broadcast complete — Success: ${response.successCount}, Failures: ${response.failureCount}")
+                logger.info("Broadcast complete — Success: ${response.successCount}, Failures: ${response.failureCount}")
 
-            if (response.failureCount > 0) {
-                response.responses
-                    .filter { !it.isSuccessful }
-                    .forEachIndexed { index, res ->
-                        logger.warn(" Failed token: ${tokens[index]}, Error: ${res.exception?.message}")
-                    }
+                if (response.failureCount > 0) {
+                    response.responses
+                        .filter { !it.isSuccessful }
+                        .forEachIndexed { index, res ->
+                            logger.warn(" Failed token: ${tokens[index]}, Error: ${res.exception?.message}")
+                        }
+                }
             }
-
-            response
         }
 }
 
