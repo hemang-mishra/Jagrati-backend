@@ -40,6 +40,7 @@ class UserRoleService(
     private val groupRepository: GroupRepository,
     private val studentRepository: StudentRepository,
     private val volunteerRepository: VolunteerRepository,
+    private val fcmService: FCMService
 ) {
     @Transactional
     fun assignRoleToUser(request: AssignRoleToUserRequest, assignedByPid: String): UserRoleAssignmentResponse {
@@ -49,6 +50,8 @@ class UserRoleService(
             userRepository.findUserByPid(assignedByPid) ?: throw IllegalArgumentException("Assigning user not found")
         val userRole = UserRole(user = user, role = role, assignedBy = assignedBy)
         userRoleRepository.save(userRole)
+        //Notify user to sync permissions
+        fcmService.sendSyncNotificationToUsers(listOf(user))
         return UserRoleAssignmentResponse(user.pid, role.id, "Role assigned to user")
     }
 
@@ -58,13 +61,15 @@ class UserRoleService(
         val role = roleRepository.findById(request.roleId).orElseThrow { IllegalArgumentException("Role not found") }
         val userRole = userRoleRepository.findByUserAndRole(user, role)
             ?: throw IllegalArgumentException("User does not have this role")
+        //Notify user to sync permissions
+        fcmService.sendSyncNotificationToUsers(listOf(user))
         userRoleRepository.delete(userRole)
         return UserRoleAssignmentResponse(user.pid, role.id, "Role removed from user")
     }
 
     fun getAllUsersWithRoles(): UserWithRolesListResponse {
         val users = userRepository.findAll()
-        val result = users.map { user ->
+        val result = users.filter { user -> user.isActive }.map { user ->
             val roles = userRoleRepository.findByUser(user).map { ur ->
                 RoleSummaryResponse(
                     id = ur.role.id,

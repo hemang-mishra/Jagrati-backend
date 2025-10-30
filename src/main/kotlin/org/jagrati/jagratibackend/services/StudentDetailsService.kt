@@ -1,5 +1,7 @@
 package org.jagrati.jagratibackend.services
 
+import jakarta.transaction.Transactional
+import org.jagrati.jagratibackend.dto.StringResponse
 import org.jagrati.jagratibackend.dto.StudentGroupHistoryListResponse
 import org.jagrati.jagratibackend.dto.StudentRequest
 import org.jagrati.jagratibackend.dto.UpdateStudentRequest
@@ -28,6 +30,7 @@ class StudentDetailsService(
     private val imageKitService: ImageKitService,
     private val fcmService: FCMService
 ) {
+    @Transactional
     fun registerNewStudent(details: StudentRequest) {
         val village = villageRepository.findById(details.villageId).orElseThrow { IllegalArgumentException("Village not found") }
         val group = groupRepository.findById(details.groupId).orElseThrow { IllegalArgumentException("Group not found") }
@@ -59,9 +62,10 @@ class StudentDetailsService(
                 assignedAt = LocalDateTime.now()
             )
         )
-        fcmService.sendSycNotification()
+        fcmService.sendSyncNotification()
     }
 
+    @Transactional
     fun updateStudent(details: UpdateStudentRequest) {
         val existing = studentRepository.findById(details.pid).orElseThrow { IllegalArgumentException("Student not found") }
         val existingGroupId = existing.group.id
@@ -101,7 +105,7 @@ class StudentDetailsService(
                 )
             )
         }
-        fcmService.sendSycNotification()
+        fcmService.sendSyncNotification()
     }
 
     fun getGroupTransitions(pid: String): StudentGroupHistoryListResponse {
@@ -118,6 +122,24 @@ class StudentDetailsService(
                 assignedAt = it.assignedAt.format(fmt)
             )
         })
+    }
+
+    @Transactional
+    fun deleteStudent(pid: String): StringResponse {
+        val student = studentRepository.findById(pid).orElseThrow { IllegalArgumentException("Student not found") }
+
+        //Making isActive false to trigger onUpdate() which is crucial to send sync notification to clients
+        studentRepository.save(student.copy(isActive = false))
+        studentRepository.flush()
+
+        //Delete profile data
+        val profilePic = student.profilePic?.let { ImageKitResponse.getFromString(it) }
+        if(profilePic != null) {
+            imageKitService.deleteFile(profilePic.fileId)
+        }
+        studentRepository.delete(student)
+        fcmService.sendSyncNotification()
+        return StringResponse("Student deleted")
     }
 
     fun getAllStudents(): List<StudentResponse> {

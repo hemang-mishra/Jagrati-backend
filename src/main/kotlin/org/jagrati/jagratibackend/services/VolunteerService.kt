@@ -4,7 +4,6 @@ import org.jagrati.jagratibackend.dto.UpdateVolunteerRequest
 import org.jagrati.jagratibackend.dto.VolunteerResponse
 import org.jagrati.jagratibackend.dto.toResponse
 import org.jagrati.jagratibackend.entities.ImageKitResponse
-import org.jagrati.jagratibackend.entities.Volunteer
 import org.jagrati.jagratibackend.repository.VolunteerRepository
 import org.springframework.stereotype.Service
 import java.time.LocalDate
@@ -57,7 +56,7 @@ class VolunteerService(
         )
 
         val savedVolunteer = volunteerRepository.save(updatedVolunteer)
-        fcmService.sendSycNotification()
+        fcmService.sendSyncNotification()
         return savedVolunteer.toResponse()
     }
 }

@@ -10,6 +10,7 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
+import org.hibernate.annotations.SQLDelete
 import org.jagrati.jagratibackend.entities.enums.Gender
 import org.jagrati.jagratibackend.entities.enums.RequestStatus
 import java.time.LocalDate
@@ -17,6 +18,9 @@ import java.time.LocalDateTime
 
 @Entity
 @Table(name = "volunteer_requests")
+@SQLDelete(
+    sql = "UPDATE volunteer_requests SET roll_number = NULL, first_name = 'Deleted', last_name = 'Request', alternate_email = NULL, batch = NULL, programme = NULL, street_address_1 = NULL, street_address_2 = NULL, pincode = NULL, city = NULL, state = NULL, contact_number = NULL, college = NULL, branch = NULL, year_of_study = NULL, reason = NULL WHERE id = ?"
+)
 data class VolunteerRequest(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

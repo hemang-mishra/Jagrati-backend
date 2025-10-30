@@ -12,9 +12,11 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import org.jagrati.jagratibackend.dto.StringResponse
 import org.jagrati.jagratibackend.security.RequiresPermission
 import org.jagrati.jagratibackend.entities.enums.AllPermissions
 import org.jagrati.jagratibackend.services.UserRoleService
+import org.jagrati.jagratibackend.services.UserService
 import org.jagrati.jagratibackend.utils.SecurityUtils
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -24,6 +26,7 @@ import org.springframework.web.bind.annotation.*
 @Tag(name = "User Management API", description = "Endpoints for managing users and their roles")
 class UserController(
     private val userRoleService: UserRoleService,
+    private val userService: UserService,
 ) {
     @Operation(summary = "List all users", description = "Fetches all users. Optionally filter by name.")
     @ApiResponses(
@@ -124,5 +127,23 @@ class UserController(
     ): ResponseEntity<UserDetailsWithRolesAndPermissions> {
         val currentUser = SecurityUtils.getCurrentUser() ?: throw IllegalArgumentException("User not found")
         return ResponseEntity.ok(userRoleService.fetchDetailsOfUser(currentUser, timeMillis))
+    }
+
+    @Operation(summary = "Delete user by pid", description = "Deletes a user along with their volunteer profile and profile picture from ImageKit")
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "User deleted successfully",
+                content = [Content(schema = Schema(implementation = String::class))]
+            ),
+            ApiResponse(responseCode = "404", description = "User not found")
+        ]
+    )
+    @DeleteMapping("/{pid}")
+    @RequiresPermission(AllPermissions.USER_DELETE)
+    fun deleteUser(@PathVariable pid: String): ResponseEntity<StringResponse> {
+        val response = userService.deleteUser(pid)
+        return ResponseEntity.ok(StringResponse(response.message))
     }
 }
