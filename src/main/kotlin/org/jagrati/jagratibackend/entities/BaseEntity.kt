@@ -2,6 +2,7 @@ package org.jagrati.jagratibackend.entities
 
 import jakarta.persistence.Column
 import jakarta.persistence.MappedSuperclass
+import jakarta.persistence.PreRemove
 import jakarta.persistence.PreUpdate
 import java.time.LocalDateTime
 
@@ -16,6 +17,11 @@ abstract class BaseEntity {
 
     @PreUpdate
     fun onUpdate() {
+        updatedAt = LocalDateTime.now()
+    }
+
+    @PreRemove
+    fun onSoftDelete() {
         updatedAt = LocalDateTime.now()
     }
 }
