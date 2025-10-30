@@ -128,6 +128,10 @@ class StudentDetailsService(
     fun deleteStudent(pid: String): StringResponse {
         val student = studentRepository.findById(pid).orElseThrow { IllegalArgumentException("Student not found") }
 
+        //Making isActive false to trigger onUpdate() which is crucial to send sync notification to clients
+        studentRepository.save(student.copy(isActive = false))
+        studentRepository.flush()
+
         //Delete profile data
         val profilePic = student.profilePic?.let { ImageKitResponse.getFromString(it) }
         if(profilePic != null) {

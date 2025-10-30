@@ -61,6 +61,10 @@ class UserServiceImpl(
 
         // Delete profile picture from ImageKit if exists in volunteer profile
         if (volunteer != null) {
+            //Making isActive false to trigger onUpdate() which is crucial to send sync notification to clients
+            volunteerRepository.save(volunteer.copy(isActive = true))
+            volunteerRepository.flush()
+            
             val profilePic = volunteer.profilePicDetails?.let { ImageKitResponse.getFromString(it) }
             if (profilePic != null) {
                 try {
@@ -72,6 +76,10 @@ class UserServiceImpl(
             }
             volunteerRepository.delete(volunteer)
         }
+
+        //Making isActive false to trigger onUpdate() which is crucial to send sync notification to clients
+        userRepository.save(user.copy(isActive = false))
+        userRepository.flush()
 
         userRepository.delete(user)
         requests.forEach { volunteerRequestRepository.delete(it) }
