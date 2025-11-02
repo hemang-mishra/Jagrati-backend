@@ -4,6 +4,7 @@ import org.jagrati.jagratibackend.dto.UpdateVolunteerRequest
 import org.jagrati.jagratibackend.dto.VolunteerResponse
 import org.jagrati.jagratibackend.dto.toResponse
 import org.jagrati.jagratibackend.entities.ImageKitResponse
+import org.jagrati.jagratibackend.repository.UserRepository
 import org.jagrati.jagratibackend.repository.VolunteerRepository
 import org.springframework.stereotype.Service
 import java.time.LocalDate
@@ -12,7 +13,8 @@ import java.time.LocalDate
 class VolunteerService(
     private val volunteerRepository: VolunteerRepository,
     private val imageKitService: ImageKitService,
-    private val fcmService: FCMService
+    private val fcmService: FCMService,
+    private val userRepository: UserRepository
 ) {
     fun getAllVolunteers(): List<VolunteerResponse> {
         return volunteerRepository.findAll().map { v -> v.toResponse() }
@@ -26,6 +28,8 @@ class VolunteerService(
     fun updateVolunteerDetails(pid: String, updateRequest: UpdateVolunteerRequest): VolunteerResponse {
         val existingVolunteer = volunteerRepository.findById(pid)
             .orElseThrow { IllegalArgumentException("Volunteer not found") }
+        val user = userRepository.findUserByPid(pid)
+            ?: throw IllegalArgumentException("Associated user not found")
 
 
         val existingProfilePic = ImageKitResponse.getFromString(existingVolunteer.profilePicDetails)
@@ -34,25 +38,31 @@ class VolunteerService(
             imageKitService.deleteFile(existingProfilePic.fileId)
         }
 
+        if (user.profilePictureUrl != updateRequest.profilePic?.url){
+            userRepository.save(user.copy(
+                profilePictureUrl = updateRequest.profilePic?.url
+            ))
+        }
+
         val updatedVolunteer = existingVolunteer.copy(
-            rollNumber = updateRequest.rollNumber ?: existingVolunteer.rollNumber,
+            rollNumber = updateRequest.rollNumber,
             firstName = updateRequest.firstName ?: existingVolunteer.firstName,
             lastName = updateRequest.lastName ?: existingVolunteer.lastName,
             gender = updateRequest.gender ?: existingVolunteer.gender,
-            alternateEmail = updateRequest.alternateEmail ?: existingVolunteer.alternateEmail,
-            batch = updateRequest.batch ?: existingVolunteer.batch,
-            programme = updateRequest.programme ?: existingVolunteer.programme,
-            streetAddress1 = updateRequest.streetAddress1 ?: existingVolunteer.streetAddress1,
-            streetAddress2 = updateRequest.streetAddress2 ?: existingVolunteer.streetAddress2,
-            pincode = updateRequest.pincode ?: existingVolunteer.pincode,
-            city = updateRequest.city ?: existingVolunteer.city,
+            alternateEmail = updateRequest.alternateEmail,
+            batch = updateRequest.batch,
+            programme = updateRequest.programme,
+            streetAddress1 = updateRequest.streetAddress1,
+            streetAddress2 = updateRequest.streetAddress2,
+            pincode = updateRequest.pincode,
+            city = updateRequest.city,
             state = updateRequest.state ?: existingVolunteer.state,
             dateOfBirth = updateRequest.dateOfBirth?.let { LocalDate.parse(it) } ?: existingVolunteer.dateOfBirth,
             contactNumber = updateRequest.contactNumber ?: existingVolunteer.contactNumber,
             college = updateRequest.college ?: existingVolunteer.college,
-            branch = updateRequest.branch ?: existingVolunteer.branch,
-            yearOfStudy = updateRequest.yearOfStudy ?: existingVolunteer.yearOfStudy,
-            profilePicDetails = updateRequest.profilePic?.convertToString() ?: existingVolunteer.profilePicDetails
+            branch = updateRequest.branch,
+            yearOfStudy = updateRequest.yearOfStudy,
+            profilePicDetails = updateRequest.profilePic?.convertToString()
         )
 
         val savedVolunteer = volunteerRepository.save(updatedVolunteer)
