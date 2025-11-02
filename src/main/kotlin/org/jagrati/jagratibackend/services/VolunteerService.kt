@@ -35,24 +35,24 @@ class VolunteerService(
         }
 
         val updatedVolunteer = existingVolunteer.copy(
-            rollNumber = updateRequest.rollNumber ?: existingVolunteer.rollNumber,
+            rollNumber = updateRequest.rollNumber,
             firstName = updateRequest.firstName ?: existingVolunteer.firstName,
             lastName = updateRequest.lastName ?: existingVolunteer.lastName,
             gender = updateRequest.gender ?: existingVolunteer.gender,
-            alternateEmail = updateRequest.alternateEmail ?: existingVolunteer.alternateEmail,
-            batch = updateRequest.batch ?: existingVolunteer.batch,
-            programme = updateRequest.programme ?: existingVolunteer.programme,
-            streetAddress1 = updateRequest.streetAddress1 ?: existingVolunteer.streetAddress1,
-            streetAddress2 = updateRequest.streetAddress2 ?: existingVolunteer.streetAddress2,
-            pincode = updateRequest.pincode ?: existingVolunteer.pincode,
-            city = updateRequest.city ?: existingVolunteer.city,
+            alternateEmail = updateRequest.alternateEmail,
+            batch = updateRequest.batch,
+            programme = updateRequest.programme,
+            streetAddress1 = updateRequest.streetAddress1,
+            streetAddress2 = updateRequest.streetAddress2,
+            pincode = updateRequest.pincode,
+            city = updateRequest.city,
             state = updateRequest.state ?: existingVolunteer.state,
             dateOfBirth = updateRequest.dateOfBirth?.let { LocalDate.parse(it) } ?: existingVolunteer.dateOfBirth,
             contactNumber = updateRequest.contactNumber ?: existingVolunteer.contactNumber,
             college = updateRequest.college ?: existingVolunteer.college,
-            branch = updateRequest.branch ?: existingVolunteer.branch,
-            yearOfStudy = updateRequest.yearOfStudy ?: existingVolunteer.yearOfStudy,
-            profilePicDetails = updateRequest.profilePic?.convertToString() ?: existingVolunteer.profilePicDetails
+            branch = updateRequest.branch,
+            yearOfStudy = updateRequest.yearOfStudy,
+            profilePicDetails = updateRequest.profilePic?.convertToString()
         )
 
         val savedVolunteer = volunteerRepository.save(updatedVolunteer)
