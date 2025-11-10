@@ -86,7 +86,6 @@ class StudentDetailsService(
             mothersName = details.mothersName ?: existing.mothersName,
             isActive = details.isActive ?: existing.isActive,
         )
-        studentRepository.save(updated)
         if(details.profilePic?.fileId != ImageKitResponse.getFromString(existing.profilePic)?.fileId && details.profilePic?.fileId != null){
             val existingProfilePic = ImageKitResponse.getFromString(existing.profilePic)
             if(existingProfilePic?.fileId != null){
@@ -99,12 +98,13 @@ class StudentDetailsService(
                 StudentGroupHistory(
                     student = updated,
                     toGroup = newGroup,
-                    fromGroup = existing.group,
+                    fromGroup = existingGroup,
                     assignedBy = currentUser,
                     assignedAt = LocalDateTime.now()
                 )
             )
         }
+        studentRepository.save(updated)
         fcmService.sendSyncNotification()
     }
 
