@@ -68,7 +68,7 @@ class StudentDetailsService(
     @Transactional
     fun updateStudent(details: UpdateStudentRequest) {
         val existing = studentRepository.findById(details.pid).orElseThrow { IllegalArgumentException("Student not found") }
-        val existingGroupId = existing.group.id
+        val existingGroup = existing.group
         val newVillage = details.villageId?.let { villageRepository.findById(it).orElseThrow { IllegalArgumentException("Village not found") } } ?: existing.village
         val newGroup = details.groupId?.let { groupRepository.findById(it).orElseThrow { IllegalArgumentException("Group not found") } } ?: existing.group
         val updated = existing.copy(
@@ -93,7 +93,7 @@ class StudentDetailsService(
                 imageKitService.deleteFile(existingProfilePic.fileId)
             }
         }
-        if (existingGroupId != newGroup.id) {
+        if (existingGroup.id != newGroup.id) {
             val currentUser = SecurityUtils.getCurrentUser() ?: throw IllegalArgumentException("No current user")
             studentGroupHistoryRepository.save(
                 StudentGroupHistory(
