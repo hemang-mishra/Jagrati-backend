@@ -56,6 +56,11 @@ jobs:
           host: ${{ secrets.PROD_HOST }}
           username: ${{ secrets.PROD_USERNAME }}
           key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
+
+          proxy_host: ${{ secrets.BASTION_HOST}}
+          proxy_username: ${{ secrets.BASTION_USERNAME }}
+          proxy_key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
+
           script: |
             cd /opt/apps/production
             /usr/bin/docker compose pull
