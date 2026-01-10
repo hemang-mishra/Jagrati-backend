@@ -52,7 +52,7 @@ jobs:
           proxy_key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
 
           source: "docker/prod/docker-compose.yaml"
-          target: "/opt/apps/production/"
+          target: "/home/jagriti/apps/production/"
           strip_components: 2
 
       - name: Deploy production stack via SSH
@@ -67,7 +67,7 @@ jobs:
           proxy_key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
 
           script: |
-            cd /opt/apps/production
+            cd /home/jagriti/apps/production
             /usr/bin/docker compose pull
             echo "BASE_URL=${{ secrets.PROD_BASE_URL }}" > .env
             echo "POSTGRES_DB=${{ secrets.PROD_POSTGRES_DB }}" >> .env
