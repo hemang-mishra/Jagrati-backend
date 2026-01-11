@@ -52,7 +52,7 @@ jobs:
           proxy_key: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
 
           source: "docker/staging/docker-compose.yaml"
-          target: "/home/jagriti/apps/staging/"
+          target: "/opt/apps/staging/"
           strip_components: 2
 
       - name: Deploy staging stack via SSH
@@ -67,7 +67,7 @@ jobs:
           proxy_key: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
 
           script: |
-            cd /home/jagriti/apps/staging
+            cd /opt/apps/staging
             /usr/bin/docker compose pull
             echo "BASE_URL=${{ secrets.STAGING_BASE_URL }}" > .env
             echo "POSTGRES_DB=${{ secrets.STAGING_POSTGRES_DB }}" >> .env
