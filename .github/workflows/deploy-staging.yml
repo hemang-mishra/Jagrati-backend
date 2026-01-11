@@ -56,11 +56,6 @@ jobs:
           host: ${{ secrets.STAGING_HOST }}
           username: ${{ secrets.STAGING_USERNAME }}
           key: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
-
-          proxy_host: ${{ secrets.BASTION_HOST}}
-          proxy_username: ${{ secrets.BASTION_USERNAME }}
-          proxy_key: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
-
           script: |
             cd /opt/apps/staging
             /usr/bin/docker compose pull
