@@ -45,7 +45,7 @@ jobs:
         with:
           host: ${{ secrets.STAGING_HOST }}
           username: ${{ secrets.STAGING_USERNAME }}
-          key: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
+          password: ${{ secrets.STAGING_PASSWORD }}
           source: "docker/staging/docker-compose.yaml"
           target: "/opt/apps/staging/"
           strip_components: 2
