@@ -14,6 +14,7 @@ import org.jagrati.jagratibackend.repository.VolunteerRequestRepository
 import org.jagrati.jagratibackend.services.FCMService
 import org.jagrati.jagratibackend.services.ImageKitService
 import org.jagrati.jagratibackend.services.UserService
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import kotlin.jvm.optionals.getOrNull
 
@@ -28,6 +29,7 @@ class UserServiceImpl(
     private val imageKitService: ImageKitService,
     private val fcmService: FCMService,
 ): UserService {
+    private val logger = LoggerFactory.getLogger(javaClass)
     override fun getUserById(pid: String): User? {
         return userRepository.findUserByPid(pid)
     }
@@ -70,8 +72,7 @@ class UserServiceImpl(
                 try {
                     imageKitService.deleteFile(profilePic.fileId)
                 } catch (e: Exception) {
-                    // Log error but continue with deletion
-                    println("Failed to delete profile picture from ImageKit: ${e.message}")
+                    logger.warn("Failed to delete profile picture from ImageKit: ${e.message}")
                 }
             }
             volunteerRepository.delete(volunteer)
