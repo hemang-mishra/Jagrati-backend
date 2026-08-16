@@ -46,6 +46,9 @@ jobs:
           host: ${{ secrets.PROD_HOST }}
           username: ${{ secrets.PROD_USERNAME }}
           key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
+          proxy_host: ${{ secrets.SAC_PROXY_HOST }}
+          proxy_username: ${{ secrets.SAC_PROXY_USERNAME }}
+          proxy_key: ${{ secrets.SAC_PROXY_SSH_PRIVATE_KEY }}
           source: "docker/prod/docker-compose.yaml"
           target: "/opt/apps/production/"
           strip_components: 2
@@ -56,6 +59,9 @@ jobs:
           host: ${{ secrets.PROD_HOST }}
           username: ${{ secrets.PROD_USERNAME }}
           key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
+          proxy_host: ${{ secrets.SAC_PROXY_HOST }}
+          proxy_username: ${{ secrets.SAC_PROXY_USERNAME }}
+          proxy_key: ${{ secrets.SAC_PROXY_SSH_PRIVATE_KEY }}
           script: |
             cd /opt/apps/production
             /usr/bin/docker compose pull
