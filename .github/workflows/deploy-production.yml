@@ -40,45 +40,65 @@ jobs:
           docker push $IMAGE_TAG
           
 
+      - name: Setup SSH (jump through SAC proxy)
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${{ secrets.SAC_PROXY_SSH_PRIVATE_KEY }}" > ~/.ssh/proxy_key
+          echo "${{ secrets.PROD_SSH_PRIVATE_KEY }}" > ~/.ssh/target_key
+          chmod 600 ~/.ssh/proxy_key ~/.ssh/target_key
+          cat >> ~/.ssh/config <<EOF
+          Host sac-proxy
+            HostName ${{ secrets.SAC_PROXY_HOST }}
+            User ${{ secrets.SAC_PROXY_USERNAME }}
+            IdentityFile ~/.ssh/proxy_key
+            StrictHostKeyChecking no
+            UserKnownHostsFile /dev/null
+            ConnectTimeout 10
+
+          Host prod-target
+            HostName ${{ secrets.PROD_HOST }}
+            User ${{ secrets.PROD_USERNAME }}
+            IdentityFile ~/.ssh/target_key
+            ProxyJump sac-proxy
+            StrictHostKeyChecking no
+            UserKnownHostsFile /dev/null
+            ConnectTimeout 10
+            ServerAliveInterval 5
+            ServerAliveCountMax 3
+          EOF
+          chmod 600 ~/.ssh/config
+
       - name: Copy docker-compose file to server
-        uses: appleboy/scp-action@v1.0.0
-        with:
-          host: ${{ secrets.PROD_HOST }}
-          username: ${{ secrets.PROD_USERNAME }}
-          key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
-          proxy_host: ${{ secrets.SAC_PROXY_HOST }}
-          proxy_username: ${{ secrets.SAC_PROXY_USERNAME }}
-          proxy_key: ${{ secrets.SAC_PROXY_SSH_PRIVATE_KEY }}
-          source: "docker/prod/docker-compose.yaml"
-          target: "/opt/apps/production/"
-          strip_components: 2
+        run: |
+          ssh prod-target 'mkdir -p /opt/apps/production'
+          scp docker/prod/docker-compose.yaml prod-target:/opt/apps/production/docker-compose.yaml
 
       - name: Deploy production stack via SSH
-        uses: appleboy/ssh-action@v1.1.0
-        with:
-          host: ${{ secrets.PROD_HOST }}
-          username: ${{ secrets.PROD_USERNAME }}
-          key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
-          proxy_host: ${{ secrets.SAC_PROXY_HOST }}
-          proxy_username: ${{ secrets.SAC_PROXY_USERNAME }}
-          proxy_key: ${{ secrets.SAC_PROXY_SSH_PRIVATE_KEY }}
-          script: |
-            cd /opt/apps/production
-            /usr/bin/docker compose pull
-            echo "BASE_URL=${{ secrets.PROD_BASE_URL }}" > .env
-            echo "POSTGRES_DB=${{ secrets.PROD_POSTGRES_DB }}" >> .env
-            echo "POSTGRES_USER=${{ secrets.PROD_POSTGRES_USERNAME }}" >> .env
-            echo "POSTGRES_PASSWORD=${{ secrets.PROD_POSTGRES_PASSWORD }}" >> .env
-            echo "JWT_SECRET_BASE_64=${{ secrets.PROD_JWT_SECRET_BASE_64 }}" >> .env
-            echo "IMAGE_KIT_PRIVATE_KEY=${{ secrets.PROD_IMAGE_KIT_PRIVATE_KEY }}" >> .env
-            echo "OAUTH2_CLIENT_ID=${{ secrets.PROD_OAUTH2_CLIENT_ID }}" >> .env
-            echo "GMAIL_PASS=${{ secrets.PROD_GMAIL_PASS }}" >> .env
-            echo "ADMIN_MAIL=${{ secrets.PROD_ADMIN_MAIL }}" >> .env
-            echo "ADMIN_PASS=${{ secrets.PROD_ADMIN_PASS }}" >> .env
-            echo "MAIL_ID=${{ secrets.PROD_MAIL_ID }}" >> .env
-            echo "FIREBASE_CREDENTIALS_BASE64=${{ secrets.PROD_FIREBASE_CREDENTIALS_BASE64 }}" >> .env
-            /usr/bin/docker compose up -d
-            docker compose up -d
-            /usr/bin/docker compose ps
-            docker compose ps
+        run: |
+          ssh prod-target bash -s <<'REMOTE_SCRIPT'
+          set -e
+          cd /opt/apps/production
+          docker compose pull
+          cat > .env <<'ENV_FILE'
+          BASE_URL=${{ secrets.PROD_BASE_URL }}
+          POSTGRES_DB=${{ secrets.PROD_POSTGRES_DB }}
+          POSTGRES_USER=${{ secrets.PROD_POSTGRES_USERNAME }}
+          POSTGRES_PASSWORD=${{ secrets.PROD_POSTGRES_PASSWORD }}
+          JWT_SECRET_BASE_64=${{ secrets.PROD_JWT_SECRET_BASE_64 }}
+          IMAGE_KIT_PRIVATE_KEY=${{ secrets.PROD_IMAGE_KIT_PRIVATE_KEY }}
+          OAUTH2_CLIENT_ID=${{ secrets.PROD_OAUTH2_CLIENT_ID }}
+          GMAIL_PASS=${{ secrets.PROD_GMAIL_PASS }}
+          ADMIN_MAIL=${{ secrets.PROD_ADMIN_MAIL }}
+          ADMIN_PASS=${{ secrets.PROD_ADMIN_PASS }}
+          MAIL_ID=${{ secrets.PROD_MAIL_ID }}
+          FIREBASE_CREDENTIALS_BASE64=${{ secrets.PROD_FIREBASE_CREDENTIALS_BASE64 }}
+          ENV_FILE
+          docker compose up -d
+          docker compose ps
+          REMOTE_SCRIPT
+
+      - name: Clean up SSH keys
+        if: always()
+        run: rm -f ~/.ssh/proxy_key ~/.ssh/target_key
 
