@@ -40,44 +40,64 @@ jobs:
           docker push $IMAGE_TAG
           
 
+      - name: Setup SSH (jump through SAC proxy)
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${{ secrets.SAC_PROXY_SSH_PRIVATE_KEY }}" > ~/.ssh/proxy_key
+          echo "${{ secrets.STAGING_SSH_PRIVATE_KEY }}" > ~/.ssh/target_key
+          chmod 600 ~/.ssh/proxy_key ~/.ssh/target_key
+          cat >> ~/.ssh/config <<EOF
+          Host sac-proxy
+            HostName ${{ secrets.SAC_PROXY_HOST }}
+            User ${{ secrets.SAC_PROXY_USERNAME }}
+            IdentityFile ~/.ssh/proxy_key
+            StrictHostKeyChecking no
+            UserKnownHostsFile /dev/null
+            ConnectTimeout 10
+
+          Host staging-target
+            HostName ${{ secrets.STAGING_HOST }}
+            User ${{ secrets.STAGING_USERNAME }}
+            IdentityFile ~/.ssh/target_key
+            ProxyJump sac-proxy
+            StrictHostKeyChecking no
+            UserKnownHostsFile /dev/null
+            ConnectTimeout 10
+            ServerAliveInterval 5
+            ServerAliveCountMax 3
+          EOF
+          chmod 600 ~/.ssh/config
+
       - name: Copy docker-compose file to server
-        uses: appleboy/scp-action@v1.0.0
-        with:
-          host: ${{ secrets.STAGING_HOST }}
-          username: ${{ secrets.STAGING_USERNAME }}
-          key: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
-          proxy_host: ${{ secrets.SAC_PROXY_HOST }}
-          proxy_username: ${{ secrets.SAC_PROXY_USERNAME }}
-          proxy_key: ${{ secrets.SAC_PROXY_SSH_PRIVATE_KEY }}
-          source: "docker/staging/docker-compose.yaml"
-          target: "/opt/apps/staging/"
-          strip_components: 2
+        run: |
+          ssh staging-target 'mkdir -p /opt/apps/staging'
+          scp docker/staging/docker-compose.yaml staging-target:/opt/apps/staging/docker-compose.yaml
 
       - name: Deploy staging stack via SSH
-        uses: appleboy/ssh-action@v1.1.0
-        with:
-          host: ${{ secrets.STAGING_HOST }}
-          username: ${{ secrets.STAGING_USERNAME }}
-          key: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
-          proxy_host: ${{ secrets.SAC_PROXY_HOST }}
-          proxy_username: ${{ secrets.SAC_PROXY_USERNAME }}
-          proxy_key: ${{ secrets.SAC_PROXY_SSH_PRIVATE_KEY }}
-          script: |
-            cd /opt/apps/staging
-            /usr/bin/docker compose pull
-            echo "BASE_URL=${{ secrets.STAGING_BASE_URL }}" > .env
-            echo "POSTGRES_DB=${{ secrets.STAGING_POSTGRES_DB }}" >> .env
-            echo "POSTGRES_USER=${{ secrets.STAGING_POSTGRES_USERNAME }}" >> .env
-            echo "POSTGRES_PASSWORD=${{ secrets.STAGING_POSTGRES_PASSWORD }}" >> .env
-            echo "JWT_SECRET_BASE_64=${{ secrets.STAGING_JWT_SECRET_BASE_64 }}" >> .env
-            echo "IMAGE_KIT_PRIVATE_KEY=${{ secrets.STAGING_IMAGE_KIT_PRIVATE_KEY }}" >> .env
-            echo "OAUTH2_CLIENT_ID=${{ secrets.STAGING_OAUTH2_CLIENT_ID }}" >> .env
-            echo "GMAIL_PASS=${{ secrets.STAGING_GMAIL_PASS }}" >> .env
-            echo "ADMIN_MAIL=${{ secrets.STAGING_ADMIN_MAIL }}" >> .env
-            echo "ADMIN_PASS=${{ secrets.STAGING_ADMIN_PASS }}" >> .env
-            echo "MAIL_ID=${{ secrets.STAGING_MAIL_ID }}" >> .env
-            echo "FIREBASE_CREDENTIALS_BASE64=${{ secrets.STAGING_FIREBASE_CREDENTIALS_BASE64 }}" >> .env
-            /usr/bin/docker compose up -d
-            docker compose up -d
-            /usr/bin/docker compose ps
-            docker compose ps
+        run: |
+          ssh staging-target bash -s <<'REMOTE_SCRIPT'
+          set -e
+          cd /opt/apps/staging
+          docker compose pull
+          cat > .env <<'ENV_FILE'
+          BASE_URL=${{ secrets.STAGING_BASE_URL }}
+          POSTGRES_DB=${{ secrets.STAGING_POSTGRES_DB }}
+          POSTGRES_USER=${{ secrets.STAGING_POSTGRES_USERNAME }}
+          POSTGRES_PASSWORD=${{ secrets.STAGING_POSTGRES_PASSWORD }}
+          JWT_SECRET_BASE_64=${{ secrets.STAGING_JWT_SECRET_BASE_64 }}
+          IMAGE_KIT_PRIVATE_KEY=${{ secrets.STAGING_IMAGE_KIT_PRIVATE_KEY }}
+          OAUTH2_CLIENT_ID=${{ secrets.STAGING_OAUTH2_CLIENT_ID }}
+          GMAIL_PASS=${{ secrets.STAGING_GMAIL_PASS }}
+          ADMIN_MAIL=${{ secrets.STAGING_ADMIN_MAIL }}
+          ADMIN_PASS=${{ secrets.STAGING_ADMIN_PASS }}
+          MAIL_ID=${{ secrets.STAGING_MAIL_ID }}
+          FIREBASE_CREDENTIALS_BASE64=${{ secrets.STAGING_FIREBASE_CREDENTIALS_BASE64 }}
+          ENV_FILE
+          docker compose up -d
+          docker compose ps
+          REMOTE_SCRIPT
+
+      - name: Clean up SSH keys
+        if: always()
+        run: rm -f ~/.ssh/proxy_key ~/.ssh/target_key
