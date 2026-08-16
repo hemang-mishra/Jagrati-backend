@@ -3,6 +3,7 @@ package org.jagrati.jagratibackend.config
 import com.google.auth.oauth2.GoogleCredentials
 import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
+import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Configuration
 import jakarta.annotation.PostConstruct
 import java.io.ByteArrayInputStream
@@ -10,6 +11,7 @@ import java.util.Base64
 
 @Configuration
 class FirebaseConfig {
+    private val logger = LoggerFactory.getLogger(javaClass)
 
     @PostConstruct
     fun initFirebase() {
@@ -22,7 +24,7 @@ class FirebaseConfig {
                 .build()
 
             FirebaseApp.initializeApp(options)
-            println("Firebase initialized.")
+            logger.info("Firebase initialized.")
         }
     }
 }

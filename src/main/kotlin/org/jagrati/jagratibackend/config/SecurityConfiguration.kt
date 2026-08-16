@@ -20,6 +20,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 @EnableWebSecurity
 class SecurityConfiguration(
     private val jwtAuthenticationFilter: JWTAuthenticationFilter,
+    private val requestLoggingFilter: RequestLoggingFilter,
     private val successHandler: OAuth2SuccessHandler,
     @Value("\${app.base-url}") private val baseUrl: String
 ) {
@@ -55,6 +56,10 @@ class SecurityConfiguration(
             .addFilterBefore(
                 jwtAuthenticationFilter,
                 UsernamePasswordAuthenticationFilter::class.java
+            )
+            .addFilterAfter(
+                requestLoggingFilter,
+                JWTAuthenticationFilter::class.java
             )
             .build()
     }
