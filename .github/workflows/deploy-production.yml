@@ -79,7 +79,6 @@ jobs:
           ssh prod-target bash -s <<'REMOTE_SCRIPT'
           set -e
           cd /opt/apps/production
-          docker compose pull
           cat > .env <<'ENV_FILE'
           BASE_URL=${{ secrets.PROD_BASE_URL }}
           POSTGRES_DB=${{ secrets.PROD_POSTGRES_DB }}
@@ -94,6 +93,7 @@ jobs:
           MAIL_ID=${{ secrets.PROD_MAIL_ID }}
           FIREBASE_CREDENTIALS_BASE64=${{ secrets.PROD_FIREBASE_CREDENTIALS_BASE64 }}
           ENV_FILE
+          docker compose pull
           docker compose up -d
           docker compose ps
           REMOTE_SCRIPT
