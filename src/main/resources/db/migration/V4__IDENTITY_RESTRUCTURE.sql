@@ -1,5 +1,9 @@
 -- Identity restructure.
 --
+-- Numbered V4, not V3: V3__POSTS_FEATURE.sql lives on the feat-posts branch and is
+-- already applied in at least one environment. Two migrations sharing a version number
+-- fail Flyway validation on any database that has seen the other one.
+--
 -- A volunteer record stops being a side-effect of an account and becomes a person
 -- record anchored to a roll number. Three things change:
 --
@@ -34,6 +38,19 @@ ALTER TABLE volunteer_attendance ALTER COLUMN marked_by_user TYPE VARCHAR(64);
 ALTER TABLE volunteer_requests ALTER COLUMN requested_by_pid TYPE VARCHAR(64);
 ALTER TABLE volunteer_requests ALTER COLUMN reviewed_by_pid TYPE VARCHAR(64);
 ALTER TABLE fcm_tokens ALTER COLUMN pid TYPE VARCHAR(64);
+
+-- The posts feature (V3) also holds pids, but it lands on its own branch and may not
+-- have been applied here yet. Widen it only if it exists, so this migration does not
+-- depend on merge order.
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'post') THEN
+        ALTER TABLE post ALTER COLUMN volunteer_pid TYPE VARCHAR(64);
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'post_likes') THEN
+        ALTER TABLE post_likes ALTER COLUMN user_pid TYPE VARCHAR(64);
+    END IF;
+END $$;
 
 -- ---------------------------------------------------------------------------
 -- 2. Soft-delete columns.
