@@ -17,6 +17,7 @@ import org.jagrati.jagratibackend.entities.Volunteer
 import org.jagrati.jagratibackend.entities.VolunteerRequest
 import org.jagrati.jagratibackend.entities.enums.AllPermissions
 import org.jagrati.jagratibackend.entities.enums.Gender
+import org.jagrati.jagratibackend.dto.PersonMasking
 import org.jagrati.jagratibackend.entities.enums.RequestStatus
 import org.jagrati.jagratibackend.repository.*
 import org.jagrati.jagratibackend.utils.NotificationContent
@@ -36,7 +37,9 @@ class VolunteerRequestService(
     private val fcmTokensRepository: FCMTokensRepository,
     private val rolePermissionRepository: RolePermissionRepository,
     private val permissionRepository: PermissionRepository,
-    private val fcmService: FCMService
+    private val fcmService: FCMService,
+    private val volunteerIdentityService: VolunteerIdentityService,
+    private val instituteIdentityService: InstituteIdentityService,
 ) {
     @Transactional
     fun createVolunteerRequest(request: CreateVolunteerRequest, userPid: String): VolunteerRequestActionResponse {
@@ -54,9 +57,25 @@ class VolunteerRequestService(
             throw IllegalArgumentException("Invalid gender. Must be one of: MALE, FEMALE, OTHER")
         }
 
+        // The roll number is derived from the address Google verified, not read from
+        // request.rollNumber. A value sent by the client is ignored: trusting it would
+        // let anyone claim someone else's roll number, and with it their attendance.
+        val rollNumber = instituteIdentityService.deriveRollNumber(user.email)
+            ?: throw IllegalArgumentException(
+                "This account has no institute roll number, so it cannot apply as a volunteer."
+            )
+
+        val claimedByOther = volunteerRepository
+            .findByRollNumberNormalizedAndDeletedAtIsNull(rollNumber)
+            ?.takeIf { it.user != null && it.user?.pid != user.pid }
+        if (claimedByOther != null) {
+            throw IllegalStateException("Roll number $rollNumber is already registered to another account.")
+        }
+
         val volunteerRequest = VolunteerRequest(
             id = 0,
-            rollNumber = request.rollNumber,
+            rollNumber = rollNumber,
+            rollNumberNormalized = rollNumber,
             firstName = request.firstName,
             lastName = request.lastName,
             gender = gender,
@@ -91,7 +110,7 @@ class VolunteerRequestService(
         }
 
         val newVolunteerContent = NotificationContent.getNewVolunteeringRequestContent(
-            request.firstName, request.lastName, request.rollNumber
+            request.firstName, request.lastName, rollNumber
         )
         fcmService.sendNotificationToMultipleDevices(users.toList(), newVolunteerContent.first, newVolunteerContent.second)
 
@@ -104,7 +123,7 @@ class VolunteerRequestService(
     }
 
     fun getAllVolunteerRequests(): List<VolunteerRequestActionResponse> {
-        return volunteerRequestRepository.findAll().map {
+        return volunteerRequestRepository.findAllByDeletedAtIsNull().map {
             VolunteerRequestActionResponse(
                 requestId = it.id,
                 status = it.status.name,
@@ -152,11 +171,31 @@ class VolunteerRequestService(
         )
         fcmService.sendSyncNotification()
 
-        //Save volunteer details in the table
-        volunteerRepository.save(
-            Volunteer(
-                pid = volunteerRequest.requestedBy.pid,
-                rollNumber = volunteerRequest.rollNumber,
+        // Approval is authorization. Identity was already settled at sign-in, so the
+        // person record either exists (possibly provisional, carrying attendance taken
+        // before they ever opened the app) or is created now. Either way the request's
+        // details fill in what the record did not know.
+        val applicant = volunteerRequest.requestedBy
+        val rollNumber = volunteerRequest.rollNumberNormalized
+            ?: instituteIdentityService.deriveRollNumber(applicant.email)
+            ?: throw IllegalStateException("Cannot approve: no roll number for ${applicant.pid}")
+
+        val existing = volunteerRepository.findByUserPidAndDeletedAtIsNull(applicant.pid)
+            ?: volunteerIdentityService.linkAccountOnSignIn(applicant)
+
+        val target = existing ?: volunteerIdentityService
+            .findOrCreateByRollNumber(
+                rawRollNumber = rollNumber,
+                createdBy = approvedBy,
+                firstName = volunteerRequest.firstName,
+                lastName = volunteerRequest.lastName,
+                batch = volunteerRequest.batch,
+            ).volunteer.let { volunteerRepository.save(it.copy(user = applicant)) }
+
+        volunteerIdentityService.promoteToActive(target) {
+            copy(
+                rollNumber = rollNumber,
+                rollNumberNormalized = rollNumber,
                 firstName = volunteerRequest.firstName,
                 lastName = volunteerRequest.lastName,
                 gender = volunteerRequest.gender,
@@ -173,9 +212,8 @@ class VolunteerRequestService(
                 college = volunteerRequest.college,
                 branch = volunteerRequest.branch,
                 yearOfStudy = volunteerRequest.yearOfStudy,
-                isActive = true
             )
-        )
+        }
 
         return VolunteerRequestActionResponse(volunteerRequest.id, volunteerRequest.status.name, "Request approved")
     }
@@ -207,7 +245,7 @@ class VolunteerRequestService(
     }
 
     fun getMyVolunteerRequests(userPid: String): MyVolunteerRequestListResponse {
-        val requests = volunteerRequestRepository.findAll().filter { it.requestedBy.pid == userPid }
+        val requests = volunteerRequestRepository.findAllByDeletedAtIsNull().filter { it.requestedBy.pid == userPid }
         val result = requests.map {
             MyVolunteerRequestResponse(
                 id = it.id,
@@ -221,7 +259,7 @@ class VolunteerRequestService(
     }
 
     fun getDetailedVolunteerRequests(): DetailedVolunteerRequestListResponse {
-        val requests = volunteerRequestRepository.findAll()
+        val requests = volunteerRequestRepository.findAllByDeletedAtIsNull()
         val detailedRequests = requests.map { mapToDetailedResponse(it) }
         return DetailedVolunteerRequestListResponse(detailedRequests)
     }
@@ -261,14 +299,6 @@ class VolunteerRequestService(
         )
     }
 
-    private fun mapUserToSummary(user: User): UserSummaryDTO {
-        return UserSummaryDTO(
-            pid = user.pid,
-            firstName = user.firstName,
-            lastName = user.lastName,
-            email = user.email,
-            profileImageUrl = user.profilePictureUrl
-        )
-    }
+    private fun mapUserToSummary(user: User): UserSummaryDTO = with(PersonMasking) { user.toSummary() }
 
 }

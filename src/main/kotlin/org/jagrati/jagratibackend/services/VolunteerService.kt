@@ -1,5 +1,6 @@
 package org.jagrati.jagratibackend.services
 
+import org.jagrati.jagratibackend.dto.PersonMasking
 import org.jagrati.jagratibackend.dto.UpdateVolunteerRequest
 import org.jagrati.jagratibackend.dto.VolunteerResponse
 import org.jagrati.jagratibackend.dto.toResponse
@@ -17,18 +18,25 @@ class VolunteerService(
     private val userRepository: UserRepository
 ) {
     fun getAllVolunteers(): List<VolunteerResponse> {
-        return volunteerRepository.findAll().map { v -> v.toResponse() }
+        return volunteerRepository.findAllByDeletedAtIsNull().map { v -> v.toResponse() }
     }
 
     fun getVolunteerByPid(pid: String): VolunteerResponse {
         val v = volunteerRepository.findById(pid).orElseThrow { IllegalArgumentException("Volunteer not found") }
-        return v.toResponse()
+        return with(PersonMasking) { v.toMaskedResponse() }
     }
 
-    fun updateVolunteerDetails(pid: String, updateRequest: UpdateVolunteerRequest): VolunteerResponse {
-        val existingVolunteer = volunteerRepository.findById(pid)
-            .orElseThrow { IllegalArgumentException("Volunteer not found") }
-        val user = userRepository.findUserByPid(pid)
+    /**
+     * Update the signed-in user's own volunteer profile.
+     *
+     * [userPid] is an account pid; the volunteer record is found through the link
+     * rather than by assuming the two share a value, which stopped being true when
+     * provisional records arrived.
+     */
+    fun updateVolunteerDetails(userPid: String, updateRequest: UpdateVolunteerRequest): VolunteerResponse {
+        val existingVolunteer = volunteerRepository.findByUserPidAndDeletedAtIsNull(userPid)
+            ?: throw IllegalArgumentException("Volunteer not found")
+        val user = userRepository.findByPidAndDeletedAtIsNull(userPid)
             ?: throw IllegalArgumentException("Associated user not found")
 
 
@@ -44,8 +52,10 @@ class VolunteerService(
             ))
         }
 
+        // rollNumber is deliberately absent: it is derived from the verified college
+        // address, not user-editable. Accepting it here is what used to wipe it when a
+        // client posted a profile update without one.
         val updatedVolunteer = existingVolunteer.copy(
-            rollNumber = updateRequest.rollNumber,
             firstName = updateRequest.firstName ?: existingVolunteer.firstName,
             lastName = updateRequest.lastName ?: existingVolunteer.lastName,
             gender = updateRequest.gender ?: existingVolunteer.gender,
@@ -57,7 +67,7 @@ class VolunteerService(
             pincode = updateRequest.pincode,
             city = updateRequest.city,
             state = updateRequest.state ?: existingVolunteer.state,
-            dateOfBirth = updateRequest.dateOfBirth?.let { LocalDate.parse(it) } ?: existingVolunteer.dateOfBirth,
+            dateOfBirth = updateRequest.dateOfBirth?.takeIf { it.isNotBlank() }?.let { LocalDate.parse(it) } ?: existingVolunteer.dateOfBirth,
             contactNumber = updateRequest.contactNumber ?: existingVolunteer.contactNumber,
             college = updateRequest.college ?: existingVolunteer.college,
             branch = updateRequest.branch,

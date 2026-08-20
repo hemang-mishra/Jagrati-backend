@@ -4,6 +4,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jagrati.jagratibackend.dto.*
+import org.jagrati.jagratibackend.entities.enums.VolunteerStatus
 import org.jagrati.jagratibackend.entities.StudentAttendance
 import org.jagrati.jagratibackend.entities.VolunteerAttendance
 import org.jagrati.jagratibackend.repository.FCMTokensRepository
@@ -27,7 +28,9 @@ class AttendanceService(
     private val volunteerAttendanceRepository: VolunteerAttendanceRepository,
     private val fcmTokenRepository: FCMTokensRepository,
     private val fcmService: FCMService,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val volunteerIdentityService: VolunteerIdentityService,
+    private val instituteIdentityService: InstituteIdentityService,
 ) {
     @Transactional
     fun markStudentAttendanceBulk(request: BulkAttendanceRequest): BulkAttendanceResultResponse {
@@ -89,8 +92,8 @@ class AttendanceService(
                         )
                     )
                     inserted += 1
-                    val user = userRepository.findByPid(v.pid)
-                    if (user != null) {
+                    // A provisional volunteer has no account to notify.
+                    v.user?.let { user ->
                         fcmService.sendNotificationToMultipleDevices(listOf(user), NotificationContent.APPRECIATION_FOR_VOLUNTEERING)
                     }
                 } catch (ex: DataIntegrityViolationException) {
@@ -98,13 +101,129 @@ class AttendanceService(
                 }
             }
         }
+        val rollNumberResults = request.rollNumbers.map { rollNumber ->
+            markOneByRollNumber(rollNumber, date, currentUser)
+        }
+        inserted += rollNumberResults.count { it.marked }
+        skippedExisting += rollNumberResults.count { !it.marked && it.pid.isNotEmpty() }
+
         return BulkAttendanceResultResponse(
             date = date.toString(),
-            totalRequested = request.pids.size,
+            totalRequested = request.pids.size + request.rollNumbers.size,
             inserted = inserted,
             skippedExisting = skippedExisting,
-            missingPids = missing
+            missingPids = missing,
+            rollNumberResults = rollNumberResults
         )
+    }
+
+    /**
+     * Mark someone present by roll number, whether or not they have ever opened the app.
+     *
+     * An unrecognised roll number is not an error — it is the common case this exists
+     * for. It creates a provisional person record so the session is credited now, and
+     * the record links itself to their account the first time they sign in.
+     */
+    @Transactional
+    fun markVolunteerAttendanceByRollNumber(request: MarkByRollNumberRequest): RollNumberAttendanceResult {
+        val date = LocalDate.parse(request.date)
+        val currentUser = SecurityUtils.getCurrentUser() ?: throw IllegalArgumentException("No current user")
+        return markOneByRollNumber(
+            rawRollNumber = request.rollNumber,
+            date = date,
+            currentUser = currentUser,
+            firstName = request.firstName,
+            lastName = request.lastName,
+            batch = request.batch,
+        )
+    }
+
+    /**
+     * Does a roll number already belong to someone? Drives the autocomplete that keeps
+     * a typo from silently becoming a person.
+     */
+    @Transactional(readOnly = true)
+    fun lookupRollNumber(rawRollNumber: String): RollNumberLookupResponse {
+        val normalized = instituteIdentityService.normalizeRollNumber(rawRollNumber)
+            ?: throw IllegalArgumentException("Roll number cannot be blank")
+        val volunteer = volunteerIdentityService.findByRollNumber(normalized)
+        return RollNumberLookupResponse(
+            rollNumber = normalized,
+            exists = volunteer != null,
+            pid = volunteer?.pid,
+            displayName = volunteer?.let { "${it.firstName} ${it.lastName}".trim() },
+            batch = volunteer?.batch,
+            isProvisional = volunteer?.status == VolunteerStatus.PROVISIONAL,
+        )
+    }
+
+    private fun markOneByRollNumber(
+        rawRollNumber: String,
+        date: LocalDate,
+        currentUser: org.jagrati.jagratibackend.entities.User,
+        firstName: String? = null,
+        lastName: String? = null,
+        batch: String? = null,
+    ): RollNumberAttendanceResult {
+        val normalized = instituteIdentityService.normalizeRollNumber(rawRollNumber)
+            ?: return RollNumberAttendanceResult(
+                rollNumber = rawRollNumber,
+                pid = "",
+                marked = false,
+                createdProvisionalRecord = false,
+                message = "Roll number cannot be blank"
+            )
+
+        val lookup = volunteerIdentityService.findOrCreateByRollNumber(
+            rawRollNumber = normalized,
+            createdBy = currentUser,
+            firstName = firstName,
+            lastName = lastName,
+            batch = batch,
+        )
+        val volunteer = lookup.volunteer
+
+        if (volunteerAttendanceRepository.existsByVolunteerPidPidAndAttendanceDate(volunteer.pid, date)) {
+            return RollNumberAttendanceResult(
+                rollNumber = normalized,
+                pid = volunteer.pid,
+                marked = false,
+                createdProvisionalRecord = lookup.created,
+                message = "Already marked present on this date"
+            )
+        }
+
+        return try {
+            volunteerAttendanceRepository.save(
+                VolunteerAttendance(
+                    volunteerPid = volunteer,
+                    markedBy = currentUser,
+                    attendanceDate = date,
+                    remarks = null
+                )
+            )
+            volunteer.user?.let { user ->
+                fcmService.sendNotificationToMultipleDevices(
+                    listOf(user),
+                    NotificationContent.APPRECIATION_FOR_VOLUNTEERING
+                )
+            }
+            RollNumberAttendanceResult(
+                rollNumber = normalized,
+                pid = volunteer.pid,
+                marked = true,
+                createdProvisionalRecord = lookup.created,
+                message = if (lookup.created) "Marked present; new record created" else "Marked present"
+            )
+        } catch (ex: DataIntegrityViolationException) {
+            RollNumberAttendanceResult(
+                rollNumber = normalized,
+                pid = volunteer.pid,
+                marked = false,
+                createdProvisionalRecord = lookup.created,
+                message = "Already marked present on this date"
+            )
+        }
     }
 
     @Transactional(readOnly = true)
@@ -127,10 +246,11 @@ class AttendanceService(
             }
         val presentStudents = studentRecords.map {
             val s = it.studentId
+            val masked = s.isDeleted
             PresentStudent(
                 pid = s.pid,
-                firstName = s.firstName,
-                lastName = s.lastName,
+                firstName = if (masked) PersonMasking.DELETED_FIRST_NAME else s.firstName,
+                lastName = if (masked) PersonMasking.DELETED_STUDENT_LAST_NAME else s.lastName,
                 gender = s.gender,
                 villageId = s.village.id,
                 villageName = s.village.name,
@@ -141,13 +261,14 @@ class AttendanceService(
         }
         val presentVolunteers = volunteerRecords.map {
             val v = it.volunteerPid
+            val masked = v.isDeleted
             PresentVolunteer(
                 pid = v.pid,
-                firstName = v.firstName,
-                lastName = v.lastName,
-                batch = v.batch,
+                firstName = if (masked) PersonMasking.DELETED_FIRST_NAME else v.firstName,
+                lastName = if (masked) PersonMasking.DELETED_LAST_NAME else v.lastName,
+                batch = if (masked) null else v.batch,
                 aid = it.id,
-                rollNo = v.rollNumber ?: ""
+                rollNo = if (masked) "" else v.rollNumber ?: ""
             )
         }
         return AttendanceReportResponse(

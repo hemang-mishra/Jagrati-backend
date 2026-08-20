@@ -12,13 +12,17 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import org.jagrati.jagratibackend.dto.DeleteMyAccountRequest
 import org.jagrati.jagratibackend.dto.StringResponse
+import org.jagrati.jagratibackend.entities.enums.DeletionSource
+import org.jagrati.jagratibackend.services.AuthService
 import org.jagrati.jagratibackend.security.RequiresPermission
 import org.jagrati.jagratibackend.entities.enums.AllPermissions
 import org.jagrati.jagratibackend.services.UserRoleService
 import org.jagrati.jagratibackend.services.UserService
 import org.jagrati.jagratibackend.utils.SecurityUtils
 import org.springframework.http.ResponseEntity
+import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -27,6 +31,7 @@ import org.springframework.web.bind.annotation.*
 class UserController(
     private val userRoleService: UserRoleService,
     private val userService: UserService,
+    private val authService: AuthService,
 ) {
     @Operation(summary = "List all users", description = "Fetches all users. Optionally filter by name.")
     @ApiResponses(
@@ -143,7 +148,35 @@ class UserController(
     @DeleteMapping("/{pid}")
     @RequiresPermission(AllPermissions.USER_DELETE)
     fun deleteUser(@PathVariable pid: String): ResponseEntity<StringResponse> {
-        val response = userService.deleteUser(pid)
+        val performedBy = SecurityUtils.getCurrentUser()
+        val response = userService.deleteUser(pid, performedBy, DeletionSource.ADMIN)
+        return ResponseEntity.ok(StringResponse(response.message))
+    }
+
+    @Operation(
+        summary = "Delete your own account",
+        description = "Permanently deletes the signed-in account. Personal details, including " +
+            "the roll number, are removed immediately. Attendance records are retained as " +
+            "de-identified rows so past reports stay accurate. This cannot be undone and " +
+            "there is no restore; re-authentication is required."
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "200", description = "Account deleted"),
+            ApiResponse(responseCode = "401", description = "Re-authentication failed"),
+            ApiResponse(responseCode = "409", description = "Refused: this is the only super admin account")
+        ]
+    )
+    @DeleteMapping("/me")
+    fun deleteMyAccount(@RequestBody request: DeleteMyAccountRequest): ResponseEntity<StringResponse> {
+        val currentUser = SecurityUtils.getCurrentUser()
+            ?: throw IllegalArgumentException("User not found")
+
+        if (!authService.verifyReauthentication(currentUser, request.password, request.googleIdToken)) {
+            throw BadCredentialsException("Please confirm your identity to delete your account.")
+        }
+
+        val response = userService.deleteUser(currentUser.pid, currentUser, DeletionSource.SELF)
         return ResponseEntity.ok(StringResponse(response.message))
     }
 }

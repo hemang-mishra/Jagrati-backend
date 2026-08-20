@@ -10,6 +10,7 @@ import UserRoleAssignmentResponse
 import UserSummaryDTO
 import UserWithRolesListResponse
 import UserWithRolesResponse
+import org.jagrati.jagratibackend.dto.PersonMasking
 import org.jagrati.jagratibackend.dto.toDTO
 import org.jagrati.jagratibackend.dto.toResponse
 import org.jagrati.jagratibackend.entities.User
@@ -68,7 +69,7 @@ class UserRoleService(
     }
 
     fun getAllUsersWithRoles(): UserWithRolesListResponse {
-        val users = userRepository.findAll()
+        val users = userRepository.findAllByDeletedAtIsNull()
         val result = users.filter { user -> user.isActive }.map { user ->
             val roles = userRoleRepository.findByUser(user).map { ur ->
                 RoleSummaryResponse(
@@ -123,17 +124,21 @@ class UserRoleService(
                 )
             }
         )
-        if(volunteerRepository.existsById(user.pid)){
+        val volunteer = volunteerRepository.findByUserPidAndDeletedAtIsNull(user.pid)
+        if (volunteer != null) {
             val updatedAfter = LocalDateTime.ofInstant(Instant.ofEpochMilli(timeMillis), ZoneId.systemDefault())
-            val volunteer = volunteerRepository.findById(user.pid).getOrNull()
-            val volunteers = volunteerRepository.findAllByUpdatedAtAfter(updatedAfter).map { it.toResponse() }
-            val students = studentRepository.findAllByUpdatedAtAfter(updatedAfter).map { it.toResponse() }
+            // Deleted rows are included on purpose: isActive=false is the tombstone the
+            // client uses to drop its local copy. Masked so a deletion never ships names.
+            val volunteers = volunteerRepository.findAllByUpdatedAtAfter(updatedAfter)
+                .map { with(PersonMasking) { it.toMaskedResponse() } }
+            val students = studentRepository.findAllByUpdatedAtAfter(updatedAfter)
+                .map { with(PersonMasking) { it.toMaskedResponse() } }
             val villages = villageRepository.findAllByUpdatedAtAfter(updatedAfter).map { it.toDTO() }
             val groups = groupRepository.findAllByUpdatedAtAfter(updatedAfter).map { it.toDTO() }
             dto = dto.copy(
                 volunteers = volunteers,
                 students = students,
-                volunteerProfile = volunteer?.toResponse(),
+                volunteerProfile = volunteer.toResponse(),
                 villages = villages,
                 groups = groups,
                 isVolunteer = true

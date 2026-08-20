@@ -9,15 +9,15 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
-import org.hibernate.annotations.SQLDelete
+import org.jagrati.jagratibackend.entities.enums.DeletionSource
 import org.jagrati.jagratibackend.entities.enums.Gender
+import java.time.LocalDateTime
 
 @Entity
-@SQLDelete(sql = "UPDATE students SET profile_pic_data = NULL, year_of_birth = NULL, first_name = 'Deleted', last_name = 'Student', school_class = NULL, primary_contact_no = NULL, secondary_contact_no = NULL, fathers_name = NULL, mothers_name = NULL, is_active = false WHERE pid = ?")
 @Table(name = "students")
 data class Student(
     @Id
-    @Column(name = "pid", length = 50)
+    @Column(name = "pid", length = 64)
     val pid: String,
 
     @Column(name = "first_name", nullable = false, length = 50)
@@ -64,5 +64,18 @@ data class Student(
 
     @ManyToOne
     @JoinColumn(name = "registered_by_pid", nullable = false)
-    val registeredBy: User
-) : BaseEntity()
+    val registeredBy: User,
+
+    @Column(name = "deleted_at")
+    var deletedAt: LocalDateTime? = null,
+
+    @Column(name = "deleted_by_pid", length = 64)
+    var deletedByPid: String? = null,
+
+    @Column(name = "deletion_source", length = 20)
+    @Enumerated(EnumType.STRING)
+    var deletionSource: DeletionSource? = null
+) : BaseEntity() {
+
+    val isDeleted: Boolean get() = deletedAt != null
+}
