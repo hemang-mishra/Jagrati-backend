@@ -54,7 +54,7 @@ class VolunteerController(
     )
     @ApiResponses(value = [
         ApiResponse(responseCode = "200", description = "Merged"),
-        ApiResponse(responseCode = "409", description = "Refused: the source record has an account attached")
+        ApiResponse(responseCode = "400", description = "Refused: the source record has an account attached")
     ])
     @RequiresPermission(AllPermissions.USER_DELETE)
     @PostMapping("/provisional/merge")
@@ -78,7 +78,7 @@ class VolunteerController(
     )
     @ApiResponses(value = [
         ApiResponse(responseCode = "200", description = "Roll number set"),
-        ApiResponse(responseCode = "409", description = "Refused: already has one, or the number is taken")
+        ApiResponse(responseCode = "400", description = "Refused: already has one, or the number is taken")
     ])
     @RequiresPermission(AllPermissions.GROUP_MANAGE_VOLUNTEERS)
     @PutMapping("/{pid}/roll-number")
@@ -91,7 +91,7 @@ class VolunteerController(
     @Operation(summary = "Remove a provisional record created by mistake")
     @ApiResponses(value = [
         ApiResponse(responseCode = "200", description = "Removed"),
-        ApiResponse(responseCode = "409", description = "Refused: the record has an account attached")
+        ApiResponse(responseCode = "400", description = "Refused: the record has an account attached")
     ])
     @RequiresPermission(AllPermissions.USER_DELETE)
     @DeleteMapping("/provisional/{pid}")

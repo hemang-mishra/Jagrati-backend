@@ -164,7 +164,7 @@ class UserController(
         value = [
             ApiResponse(responseCode = "200", description = "Account deleted"),
             ApiResponse(responseCode = "401", description = "Re-authentication failed"),
-            ApiResponse(responseCode = "409", description = "Refused: this is the only super admin account")
+            ApiResponse(responseCode = "400", description = "Refused: this is the only super admin account")
         ]
     )
     @DeleteMapping("/me")
