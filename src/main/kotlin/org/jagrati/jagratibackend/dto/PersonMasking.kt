@@ -56,6 +56,8 @@ object PersonMasking {
         val (first, last) = maskedName()
         return VolunteerResponse(
             pid = pid,
+            userPid = null,
+            status = status.name,
             rollNumber = null,
             firstName = first,
             lastName = last,
