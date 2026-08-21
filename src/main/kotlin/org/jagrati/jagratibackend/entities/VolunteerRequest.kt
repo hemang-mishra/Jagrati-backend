@@ -10,7 +10,6 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
-import org.hibernate.annotations.SQLDelete
 import org.jagrati.jagratibackend.entities.enums.Gender
 import org.jagrati.jagratibackend.entities.enums.RequestStatus
 import java.time.LocalDate
@@ -18,16 +17,16 @@ import java.time.LocalDateTime
 
 @Entity
 @Table(name = "volunteer_requests")
-@SQLDelete(
-    sql = "UPDATE volunteer_requests SET roll_number = NULL, first_name = 'Deleted', last_name = 'Request', alternate_email = NULL, batch = NULL, programme = NULL, street_address_1 = NULL, street_address_2 = NULL, pincode = NULL, city = NULL, state = NULL, contact_number = NULL, college = NULL, branch = NULL, year_of_study = NULL, reason = NULL WHERE id = ?"
-)
 data class VolunteerRequest(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long,
 
-    @Column(name = "roll_number", length = 20)
+    @Column(name = "roll_number", length = 32)
     val rollNumber: String?,
+
+    @Column(name = "roll_number_normalized", length = 32)
+    val rollNumberNormalized: String? = null,
 
     @Column(name = "first_name", nullable = false, length = 50)
     val firstName: String,
@@ -94,5 +93,8 @@ data class VolunteerRequest(
     var reviewedBy: User?,
 
     @Column(name = "reviewed_at")
-    var reviewedAt: LocalDateTime?
+    var reviewedAt: LocalDateTime?,
+
+    @Column(name = "deleted_at")
+    var deletedAt: LocalDateTime? = null
 ) : BaseEntity()

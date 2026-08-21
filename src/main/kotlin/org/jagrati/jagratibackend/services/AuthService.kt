@@ -44,6 +44,8 @@ class AuthService(
     @param:Value("\${spring.security.oauth2.client.registration.google.client-id}")
     private val googleClientId: String,
     private val fcmTokensRepository: FCMTokensRepository,
+    private val instituteIdentityService: InstituteIdentityService,
+    private val volunteerIdentityService: VolunteerIdentityService,
 ) {
     private val logger = LoggerFactory.getLogger(AuthService::class.java)
     data class TokenPair(
@@ -52,6 +54,8 @@ class AuthService(
     )
 
     fun register(firstName: String, lastName: String, email: String, password: String): User {
+        requireInstituteEmail(email)
+
         // Check if email already exists
         val existingUserByEmail = userService.getUserByEmail(email)
         if (existingUserByEmail != null) {
@@ -106,6 +110,8 @@ class AuthService(
             //Managing the device token for FCM
             handleDeviceToken(deviceId, user)
         }
+
+        volunteerIdentityService.linkAccountOnSignIn(user)
 
         return TokenPair(newAccessToken, newRefreshToken)
     }
@@ -256,6 +262,8 @@ class AuthService(
         val idToken = verifier.verify(idTokenString) ?: throw BadCredentialsException("Google idToken couldn't be verified.")
 
         val payload: GoogleIdToken.Payload = idToken.payload
+        requireInstituteEmail(payload.email)
+
         val user = processOAuth2User(
             email = payload.email,
             firstName = payload["given_name"] as String,
@@ -267,6 +275,12 @@ class AuthService(
         val refreshToken = jwtService.generateRefreshToken(user)
         storeRefreshToken(user.email, refreshToken)
         handleDeviceToken(deviceToken, user)
+
+        // Identity, not authorization: the address Google just verified names a roll
+        // number, so any provisional record holding it belongs to this account. The
+        // VOLUNTEER role is still granted separately, at request approval.
+        volunteerIdentityService.linkAccountOnSignIn(user)
+
         return TokenPair(accessToken, refreshToken)
     }
 
@@ -303,6 +317,45 @@ class AuthService(
         val existing = fcmTokensRepository.findByDeviceId(deviceToken)
         if (existing != null && existing.user.pid == currentUser.pid){
             fcmTokensRepository.delete(existing)
+        }
+    }
+
+    /**
+     * Prove the person at the keyboard is the account holder, immediately before a
+     * destructive action.
+     *
+     * Both paths exist because both kinds of account do. A Google-only account never
+     * chose a password — [processOAuth2User] assigns a random one it is never told —
+     * so demanding one would make self-deletion impossible for most users.
+     */
+    fun verifyReauthentication(user: User, password: String?, googleIdToken: String?): Boolean {
+        if (!password.isNullOrBlank() && user.passwordHash.isNotBlank()) {
+            return hashEncoder.matches(password, user.passwordHash)
+        }
+
+        if (!googleIdToken.isNullOrBlank()) {
+            val verifier = GoogleIdTokenVerifier.Builder(NetHttpTransport(), GsonFactory.getDefaultInstance())
+                .setAudience(Collections.singleton(googleClientId))
+                .build()
+            val idToken = verifier.verify(googleIdToken) ?: return false
+            return idToken.payload.email.equals(user.email, ignoreCase = true)
+        }
+
+        return false
+    }
+
+    /**
+     * The domain rule, enforced where it counts.
+     *
+     * The Android client shows a friendlier message earlier
+     * (`Utils.isCollegeEmailId`), but that check is advisory: it is bypassed in debug
+     * builds and absent entirely for anything calling the API directly. Since the roll
+     * number is derived from this address, letting a non-institute address through
+     * would mean an account that can never be identified.
+     */
+    private fun requireInstituteEmail(email: String) {
+        if (!instituteIdentityService.isSignInAllowed(email)) {
+            throw IllegalArgumentException("Please use your college email ID.")
         }
     }
 

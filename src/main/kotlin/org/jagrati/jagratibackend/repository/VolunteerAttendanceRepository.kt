@@ -8,4 +8,5 @@ interface VolunteerAttendanceRepository: JpaRepository<VolunteerAttendance, Long
     fun findByAttendanceDate(date: LocalDate): List<VolunteerAttendance>
     fun findByVolunteerPidPid(pid: String): List<VolunteerAttendance>
     fun existsByVolunteerPidPidAndAttendanceDate(pid: String, date: LocalDate): Boolean
+    fun countByVolunteerPidPid(pid: String): Long
 }

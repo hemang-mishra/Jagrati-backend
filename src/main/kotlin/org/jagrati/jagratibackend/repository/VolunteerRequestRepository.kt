@@ -19,4 +19,7 @@ interface VolunteerRequestRepository: JpaRepository<VolunteerRequest, Long> {
     fun findByReviewedBy(reviewedBy: User): List<VolunteerRequest>
     fun existsByRollNumber(rollNumber: String): Boolean
     fun countByStatus(status: RequestStatus): Long
+    fun findByRollNumberNormalized(rollNumberNormalized: String): List<VolunteerRequest>
+    fun findAllByDeletedAtIsNull(): List<VolunteerRequest>
+    fun findByRequestedByAndDeletedAtIsNull(requestedBy: User): List<VolunteerRequest>
 }

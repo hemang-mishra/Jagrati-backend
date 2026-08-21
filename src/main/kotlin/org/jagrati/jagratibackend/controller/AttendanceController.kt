@@ -4,6 +4,9 @@ import org.jagrati.jagratibackend.dto.AttendanceReportResponse
 import org.jagrati.jagratibackend.dto.AttendanceRecordResponse
 import org.jagrati.jagratibackend.dto.BulkAttendanceRequest
 import org.jagrati.jagratibackend.dto.BulkAttendanceResultResponse
+import org.jagrati.jagratibackend.dto.MarkByRollNumberRequest
+import org.jagrati.jagratibackend.dto.RollNumberAttendanceResult
+import org.jagrati.jagratibackend.dto.RollNumberLookupResponse
 import org.jagrati.jagratibackend.entities.enums.AllPermissions
 import org.jagrati.jagratibackend.security.RequiresPermission
 import org.jagrati.jagratibackend.services.AttendanceService
@@ -45,6 +48,33 @@ class AttendanceController(private val attendanceService: AttendanceService) {
     @PostMapping("/volunteers/mark-bulk")
     fun markVolunteers(@RequestBody request: BulkAttendanceRequest): ResponseEntity<BulkAttendanceResultResponse> =
         ResponseEntity.ok(attendanceService.markVolunteerAttendanceBulk(request))
+
+    @Operation(
+        summary = "Mark a volunteer present by roll number",
+        description = "Works whether or not the person is registered on the app. An " +
+            "unrecognised roll number creates a provisional record so the session is " +
+            "credited immediately; it links itself to their account when they first sign in."
+    )
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Attendance marked", content = [Content(schema = Schema(implementation = RollNumberAttendanceResult::class))])
+    ])
+    @RequiresPermission(AllPermissions.ATTENDANCE_MARK_VOLUNTEER)
+    @PostMapping("/volunteers/mark-by-roll")
+    fun markVolunteerByRollNumber(@RequestBody request: MarkByRollNumberRequest): ResponseEntity<RollNumberAttendanceResult> =
+        ResponseEntity.ok(attendanceService.markVolunteerAttendanceByRollNumber(request))
+
+    @Operation(
+        summary = "Look up a roll number",
+        description = "Whether a roll number already belongs to someone. Drives the " +
+            "autocomplete that stops a typo from silently becoming a new person."
+    )
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Lookup result", content = [Content(schema = Schema(implementation = RollNumberLookupResponse::class))])
+    ])
+    @RequiresPermission(AllPermissions.ATTENDANCE_MARK_VOLUNTEER)
+    @GetMapping("/volunteers/lookup-roll")
+    fun lookupRollNumber(@RequestParam("rollNumber") rollNumber: String): ResponseEntity<RollNumberLookupResponse> =
+        ResponseEntity.ok(attendanceService.lookupRollNumber(rollNumber))
 
     @Operation(summary = "Get daily attendance report")
     @ApiResponses(value = [

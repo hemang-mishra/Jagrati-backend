@@ -7,6 +7,7 @@ import org.jagrati.jagratibackend.entities.Group
 import org.jagrati.jagratibackend.entities.ImageKitResponse
 import org.jagrati.jagratibackend.entities.User
 import org.jagrati.jagratibackend.entities.enums.Gender
+import org.jagrati.jagratibackend.entities.enums.VolunteerStatus
 import java.time.LocalDate
 
 data class StudentResponse(
@@ -30,6 +31,13 @@ data class StudentResponse(
 
 data class VolunteerResponse(
     val pid: String,
+
+    /** The account linked to this person, or null while the record is unclaimed. */
+    val userPid: String?,
+
+    /** PROVISIONAL until an account is linked, then ACTIVE. */
+    val status: String,
+
     val rollNumber: String?,
     val firstName: String,
     val lastName: String,
@@ -114,6 +122,8 @@ fun StudentResponse.toEntity(village: Village, group: Group, registeredBy: User)
 
 fun Volunteer.toResponse(): VolunteerResponse = VolunteerResponse(
     pid = this.pid,
+    userPid = this.user?.pid,
+    status = this.status.name,
     rollNumber = this.rollNumber,
     firstName = this.firstName,
     lastName = this.lastName,
@@ -126,7 +136,7 @@ fun Volunteer.toResponse(): VolunteerResponse = VolunteerResponse(
     pincode = this.pincode,
     city = this.city,
     state = this.state,
-    dateOfBirth = this.dateOfBirth.toString(), // ISO format
+    dateOfBirth = this.dateOfBirth?.toString() ?: "", // ISO format; empty for a provisional record
     contactNumber = this.contactNumber,
     college = this.college,
     branch = this.branch,
@@ -138,6 +148,7 @@ fun Volunteer.toResponse(): VolunteerResponse = VolunteerResponse(
 fun VolunteerResponse.toEntity(): Volunteer = Volunteer(
     pid = this.pid,
     rollNumber = this.rollNumber,
+    status = VolunteerStatus.valueOf(this.status),
     firstName = this.firstName,
     lastName = this.lastName,
     gender = this.gender,
@@ -149,7 +160,7 @@ fun VolunteerResponse.toEntity(): Volunteer = Volunteer(
     pincode = this.pincode,
     city = this.city,
     state = this.state,
-    dateOfBirth = LocalDate.parse(this.dateOfBirth),
+    dateOfBirth = this.dateOfBirth.takeIf { it.isNotBlank() }?.let { LocalDate.parse(it) },
     contactNumber = this.contactNumber,
     college = this.college,
     branch = this.branch,

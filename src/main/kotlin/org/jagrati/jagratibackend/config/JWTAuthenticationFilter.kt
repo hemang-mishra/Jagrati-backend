@@ -28,7 +28,11 @@ class JWTAuthenticationFilter(
                 if (jwtService.validateAccessToken(token)) {
                     val pid = jwtService.getUserIdFromToken(token)
                     val user = userService.getUserById(pid)
-                    if (user != null) {
+                    // getUserById resolves deleted accounts on purpose, so that retained
+                    // references like "marked by" still render. Authentication must not
+                    // accept one: deletion revokes refresh tokens, but without this the
+                    // access token already in hand keeps working until it expires.
+                    if (user != null && user.isActive && !user.isDeleted) {
                         val authentication = UsernamePasswordAuthenticationToken(
                             user,
                             null, // credentials - null as we're using token authentication
