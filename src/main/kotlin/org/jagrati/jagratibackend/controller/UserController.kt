@@ -134,7 +134,15 @@ class UserController(
         return ResponseEntity.ok(userRoleService.fetchDetailsOfUser(currentUser, timeMillis))
     }
 
-    @Operation(summary = "Delete user by pid", description = "Deletes a user along with their volunteer profile and profile picture from ImageKit")
+    @Operation(
+        summary = "Delete a user account",
+        description = "Runs the same deletion as a person deleting their own account. " +
+            "Personal details, including the roll number, are removed immediately and the " +
+            "roll number is released. Attendance records are retained as de-identified rows " +
+            "so past reports stay accurate, and the person renders as \"Former Volunteer\" " +
+            "wherever they are still referenced. Sessions are revoked. This cannot be undone " +
+            "and there is no restore. Recorded against the acting admin in account_deletions."
+    )
     @ApiResponses(
         value = [
             ApiResponse(
