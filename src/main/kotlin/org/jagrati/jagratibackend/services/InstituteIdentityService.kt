@@ -73,6 +73,12 @@ class InstituteIdentityService(
 
     companion object {
         const val MAX_ROLL_NUMBER_LENGTH = 32
-        private val WHITESPACE = Regex("\\s+")
+        /**
+         * `\s` is ASCII-only in Java, so it misses U+00A0 and friends — precisely what
+         * a roll number pasted from a web page, a PDF or a chat message carries. One
+         * invisible character was enough to make an otherwise identical roll number
+         * fail to match, creating a second person for the same human.
+         */
+        private val WHITESPACE = Regex("[\\s\\p{Z}\\p{Cf}\\p{Cc}]+")
     }
 }

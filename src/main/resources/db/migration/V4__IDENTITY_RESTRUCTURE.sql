@@ -168,6 +168,24 @@ CREATE UNIQUE INDEX uq_volunteers_roll_number_active
     ON volunteers (roll_number_normalized)
     WHERE deleted_at IS NULL AND roll_number_normalized IS NOT NULL;
 
+-- Roll numbers are case-insensitive, and uppercase is the canonical form.
+--
+-- The uniqueness index below is a plain one, so it is only case-insensitive as long as
+-- every writer uppercases. These constraints make that a guarantee rather than a
+-- convention: anything storing "23bcs001" fails loudly instead of quietly creating a
+-- second person alongside "23BCS001".
+ALTER TABLE volunteers
+    ADD CONSTRAINT ck_volunteers_roll_number_upper
+    CHECK (roll_number IS NULL OR roll_number = UPPER(roll_number));
+
+ALTER TABLE volunteers
+    ADD CONSTRAINT ck_volunteers_roll_number_normalized_upper
+    CHECK (roll_number_normalized IS NULL OR roll_number_normalized = UPPER(roll_number_normalized));
+
+ALTER TABLE volunteer_requests
+    ADD CONSTRAINT ck_volunteer_requests_roll_number_upper
+    CHECK (roll_number IS NULL OR roll_number = UPPER(roll_number));
+
 -- Required while alive, released on deletion.
 --
 -- NOT VALID: any volunteer still missing a roll number after the backfill above
