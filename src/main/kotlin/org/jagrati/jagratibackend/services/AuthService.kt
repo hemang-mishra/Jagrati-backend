@@ -48,6 +48,19 @@ class AuthService(
     private val volunteerIdentityService: VolunteerIdentityService,
 ) {
     private val logger = LoggerFactory.getLogger(AuthService::class.java)
+
+    /**
+     * Built once and reused.
+     *
+     * The verifier caches Google's public signing certificates. Building one per request
+     * throws that cache away, so every sign-in depended on a fresh fetch from Google and any
+     * transient failure there surfaced as a rejected token that worked on the next attempt.
+     */
+    private val googleIdTokenVerifier: GoogleIdTokenVerifier by lazy {
+        GoogleIdTokenVerifier.Builder(NetHttpTransport(), GsonFactory.getDefaultInstance())
+            .setAudience(Collections.singleton(googleClientId))
+            .build()
+    }
     data class TokenPair(
         val accessToken: String,
         val refreshToken: String
@@ -255,20 +268,24 @@ class AuthService(
     }
 
     fun loginWithGoogle(idTokenString: String, deviceToken: String): TokenPair{
-        val verifier = GoogleIdTokenVerifier.Builder(NetHttpTransport(), GsonFactory.getDefaultInstance())
-            .setAudience(Collections.singleton(googleClientId))
-            .build()
-
-        val idToken = verifier.verify(idTokenString) ?: throw BadCredentialsException("Google idToken couldn't be verified.")
+        val idToken = googleIdTokenVerifier.verify(idTokenString)
+            ?: throw BadCredentialsException("Google idToken couldn't be verified.")
 
         val payload: GoogleIdToken.Payload = idToken.payload
         requireInstituteEmail(payload.email)
 
+        // given_name is absent on some Google accounts, and casting it straight to String
+        // failed the sign-in permanently for those people. Fall back through the full name to
+        // the address itself, all of which are present.
+        val givenName = payload["given_name"] as? String
+            ?: (payload["name"] as? String)?.substringBefore(' ')
+            ?: payload.email.substringBefore('@')
+
         val user = processOAuth2User(
             email = payload.email,
-            firstName = payload["given_name"] as String,
-            lastName = payload["family_name"] as String? ?: "",
-            pictureUrl = payload["picture"] as String?,
+            firstName = givenName,
+            lastName = payload["family_name"] as? String ?: "",
+            pictureUrl = payload["picture"] as? String,
         )
 
         val accessToken = jwtService.generateAccessToken(user)
@@ -334,10 +351,7 @@ class AuthService(
         }
 
         if (!googleIdToken.isNullOrBlank()) {
-            val verifier = GoogleIdTokenVerifier.Builder(NetHttpTransport(), GsonFactory.getDefaultInstance())
-                .setAudience(Collections.singleton(googleClientId))
-                .build()
-            val idToken = verifier.verify(googleIdToken) ?: return false
+            val idToken = googleIdTokenVerifier.verify(googleIdToken) ?: return false
             return idToken.payload.email.equals(user.email, ignoreCase = true)
         }
 
