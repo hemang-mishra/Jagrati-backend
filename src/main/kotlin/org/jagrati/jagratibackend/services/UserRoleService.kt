@@ -15,6 +15,7 @@ import org.jagrati.jagratibackend.dto.toDTO
 import org.jagrati.jagratibackend.dto.toResponse
 import org.jagrati.jagratibackend.entities.User
 import org.jagrati.jagratibackend.entities.UserRole
+import org.jagrati.jagratibackend.entities.enums.VolunteerStatus
 import org.jagrati.jagratibackend.repository.GroupRepository
 import org.jagrati.jagratibackend.repository.RolePermissionRepository
 import org.jagrati.jagratibackend.repository.RoleRepository
@@ -124,8 +125,22 @@ class UserRoleService(
                 )
             }
         )
+        // Holding a volunteer record answers "who is this person", not "may they act as a
+        // volunteer". A PROVISIONAL record is someone whose roll number was typed at the
+        // attendance screen and who has since signed in; the account is linked so they can
+        // see their own history, but they have not applied or been approved yet. Reporting
+        // them as a volunteer sends them to the dashboard and hides the application form.
         val volunteer = volunteerRepository.findByUserPidAndDeletedAtIsNull(user.pid)
+        val isActiveVolunteer = volunteer?.status == VolunteerStatus.ACTIVE
+
         if (volunteer != null) {
+            dto = dto.copy(
+                volunteerProfile = volunteer.toResponse(),
+                isVolunteer = isActiveVolunteer
+            )
+        }
+
+        if (isActiveVolunteer) {
             val updatedAfter = LocalDateTime.ofInstant(Instant.ofEpochMilli(timeMillis), ZoneId.systemDefault())
             // Deleted rows are included on purpose: isActive=false is the tombstone the
             // client uses to drop its local copy. Masked so a deletion never ships names.
@@ -138,10 +153,8 @@ class UserRoleService(
             dto = dto.copy(
                 volunteers = volunteers,
                 students = students,
-                volunteerProfile = volunteer.toResponse(),
                 villages = villages,
-                groups = groups,
-                isVolunteer = true
+                groups = groups
             )
         }
         return dto
